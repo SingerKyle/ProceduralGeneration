@@ -2,6 +2,7 @@
 
 
 #include "ProceduralTestRoom.h"
+#include "DrawDebugHelpers.h"
 
 // Sets default values
 AProceduralTestRoom::AProceduralTestRoom()
@@ -15,8 +16,17 @@ AProceduralTestRoom::AProceduralTestRoom()
 		SetRootComponent(RoomFloor);
 	}
 
+
+	// setup proc gen details
 	SpawnNum = 1;
 	GridSize = FVector2d(1.f, 1.f);
+	GridWidth = 200;
+	GridHeight = 1.f;
+	GridLength = 400.f;
+	GridWidth = 400.f;
+
+	TopLeft = FVector(0.f);
+	BottomRight = FVector(0.f);
 }
 
 // Called when the game starts or when spawned
@@ -28,6 +38,8 @@ void AProceduralTestRoom::BeginPlay()
 	{
 		SpawnTestItem(TestComponent);
 	}
+
+	CreateGrid();
 	
 }
 
@@ -51,7 +63,10 @@ void AProceduralTestRoom::CreateGrid()
 {
 	for (int32 i = 0; i < GridSize.X; i++)
 	{
+		FVector Start = TopLeft + FVector(i * GridWidth, 0.0f, GridHeight);
+		FVector End = Start + FVector(0.f, GridLength, GridHeight);
 
+		DrawDebugLine(GetWorld(), Start, End, FColor::Red, true);
 	}
 }
 

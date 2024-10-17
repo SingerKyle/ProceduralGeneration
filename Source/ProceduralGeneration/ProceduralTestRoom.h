@@ -24,7 +24,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = "Mesh", meta = (AllowPrivateAccess = true)) TSubclassOf<AActor> TestComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Settings", meta = (AllowPrivateAccess = true)) int SpawnNum;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Settings", meta = (AllowPrivateAccess = true)) FVector2d GridSize;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Settings", meta = (AllowPrivateAccess = true)) FVector2D GridSize;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Settings", meta = (AllowPrivateAccess = true)) float GridWidth;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Settings", meta = (AllowPrivateAccess = true)) float GridHeight;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Settings", meta = (AllowPrivateAccess = true)) float GridLength;
+
+	FVector TopLeft;
+	FVector BottomRight;
 
 public:	
 	// Called every frame
