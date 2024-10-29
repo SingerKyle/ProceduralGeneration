@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Components/TimelineComponent.h"
 #include "ParkourCharacter.generated.h"
 
 class USpringArmComponent;
@@ -49,6 +50,10 @@ class PROCEDURALGENERATION_API AParkourCharacter : public ACharacter
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
 	bool IsCrouching = false;
+
+	FTimeline CrouchTimeline;
+
+	UPROPERTY(EditAnywhere, Category = "TimeLine") UCurveFloat* CrouchCurveFloat;
 
 public:
 	// Sets default values for this character's properties

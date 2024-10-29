@@ -56,6 +56,13 @@ void AParkourCharacter::BeginPlay()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
+
+	if (CrouchCurveFloat)
+	{
+		FOnTimelineFloat timelineProgress;
+		//timelineProgress.BindUFunction(this, FName("CrouchTimer"));
+		CrouchTimeline.AddInterpFloat(CrouchCurveFloat, timelineProgress);
+	}
 }
 
 void AParkourCharacter::Move(const FInputActionValue& Value)
@@ -110,7 +117,16 @@ void AParkourCharacter::StopSprint()
 
 void AParkourCharacter::StartCrouching()
 {
-	SetCrouching();
+	SetCrouching(); // switch crouch state
+
+	if (GetCrouching()) // if you are entering crouch
+	{
+		CrouchTimeline.PlayFromStart();
+	}
+	else // if you are leaving crouch
+	{
+		CrouchTimeline.ReverseFromEnd();
+	}
 }
 
 // Called every frame
@@ -118,6 +134,7 @@ void AParkourCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	CrouchTimeline.TickTimeline(DeltaTime);
 }
 
 // Called to bind functionality to input
