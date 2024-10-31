@@ -12,7 +12,7 @@ class UMechanicsComponent;
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable)
 class PROCEDURALGENERATION_API UBaseMechanic : public UObject
 {
 	GENERATED_BODY()
@@ -38,11 +38,13 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Mechanics")
 	void StopMechanic(AActor* Actor);
 
+	UFUNCTION(BlueprintNativeEvent, Category = "Mechanics") void TickMechanic(float DeltaTime);
+
 	// Event called when action is added
-	UFUNCTION(BlueprintNativeEvent, Category = "Mechanics") void OnActionAdded(AActor* Actor);
+	UFUNCTION(BlueprintNativeEvent, Category = "Mechanics") void OnMechanicAdded(AActor* Actor);
 
 	// Event called when action is removed
-	UFUNCTION(BlueprintNativeEvent, Category = "Mechanics") void OnActionRemoved(AActor* Actor);
+	UFUNCTION(BlueprintNativeEvent, Category = "Mechanics") void OnMechanicRemoved(AActor* Actor);
 
 	// the gameplay tag associated with this mechanic
 	UPROPERTY(EditAnywhere, Category = "Mechanics") FGameplayTag MechanicTag;

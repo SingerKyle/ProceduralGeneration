@@ -8,6 +8,8 @@
 void UBaseMechanic::Initialize(UMechanicsComponent* NewMechanic)
 {
 	MechanicComponent = NewMechanic;
+
+	IsRunning = false;
 }
 
 bool UBaseMechanic::GetIsRunning() const
@@ -32,14 +34,18 @@ bool UBaseMechanic::CanStart_Implementation(AActor* Actor)
 	return true;
 }
 
-void UBaseMechanic::OnActionAdded_Implementation(AActor* Actor)
+void UBaseMechanic::OnMechanicAdded_Implementation(AActor* Actor)
 {
-	
+
 }
 
-void UBaseMechanic::OnActionRemoved_Implementation(AActor* Actor)
+void UBaseMechanic::OnMechanicRemoved_Implementation(AActor* Actor)
 {
 
+}
+
+void UBaseMechanic::TickMechanic_Implementation(float DeltaTime)
+{
 }
 
 UMechanicsComponent* UBaseMechanic::GetOwningComponent() const
@@ -56,6 +62,7 @@ void UBaseMechanic::StartMechanic_Implementation(AActor* Actor)
 	IsRunning = true;
 	OwningActor = Actor;
 
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("BaseMechanic StartMechanic Function"));
 }
 
 void UBaseMechanic::StopMechanic_Implementation(AActor* Actor)
@@ -71,5 +78,17 @@ void UBaseMechanic::StopMechanic_Implementation(AActor* Actor)
 
 bool UBaseMechanic::CanStartMechanic_Implementation(AActor* InInstigator)
 {
-	return false;
+	if (GetIsRunning())
+	{
+		return false;
+	}
+	
+	UMechanicsComponent* OwnerComponent = GetOwningComponent();
+
+	if (OwnerComponent->GetActiveTags().HasAnyExact(BlockedTags))
+	{
+		return false;
+	}
+
+	return true;
 }

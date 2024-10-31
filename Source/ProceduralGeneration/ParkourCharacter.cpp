@@ -8,6 +8,9 @@
 #include <GameFramework/SpringArmComponent.h>
 #include <GameFramework/Controller.h>
 
+#include "ProceduralGeneration/PGameTags.h"
+#include "ProceduralGeneration/MechanicComponents/MechanicsComponent.h"
+
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
@@ -15,6 +18,10 @@
 // Sets default values
 AParkourCharacter::AParkourCharacter()
 {
+	// assign capsule variables
+	FullCapsule = FVector2f(42.f, 96.0f);
+	HalfCapsule = FVector2f(FullCapsule.X / 2, FullCapsule.Y / 2);
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
@@ -40,6 +47,8 @@ AParkourCharacter::AParkourCharacter()
 	TFPSCamera->SetRelativeLocation(FVector(0.0f, 10.0f, 0.0f));
 	TFPSCamera->SetRelativeRotation(FRotator(0.0f, 90.0f, -90.0f));
 	TFPSCamera->bUsePawnControlRotation = true;
+
+	MechanicComponent = CreateDefaultSubobject<UMechanicsComponent>(TEXT("Mechanic Component"));
 
 }
 
@@ -117,15 +126,24 @@ void AParkourCharacter::StopSprint()
 
 void AParkourCharacter::StartCrouching()
 {
-	SetCrouching(); // switch crouch state
+	if (MechanicComponent)
+	{
+		// probably a better way to do this, look into later
+		if (!GetCrouching()) // if player is already crouching / sliding
+		{
+			if (MechanicComponent->StartMechanic(this, SlideMechanicTag))
+			{
+				SetCrouching();
+			}
+		}
+		else // if player is not crouching
+		{
+			if (MechanicComponent->StopMechanic(this, SlideMechanicTag))
+			{
+				SetCrouching();
+			}
+		}
 
-	if (GetCrouching()) // if you are entering crouch
-	{
-		CrouchTimeline.PlayFromStart();
-	}
-	else // if you are leaving crouch
-	{
-		CrouchTimeline.ReverseFromEnd();
 	}
 }
 

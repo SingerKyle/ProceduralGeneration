@@ -37,6 +37,10 @@ public:
 	// Remove an action from component
 	UFUNCTION(BlueprintCallable, Category = "GameplayTags") void RemoveMechanic(UBaseMechanic* MechanicToRemove);
 
+	UFUNCTION(BlueprintCallable, Category = "Mechanics") bool StartMechanic(AActor* Actor, FGameplayTag MechanicTag);
+
+	UFUNCTION(BlueprintCallable, Category = "Mechanics") bool StopMechanic(AActor* Actor, FGameplayTag MechanicTag);
+
 	bool DoesTagExist(FGameplayTag Tag);
 
 protected:
