@@ -82,7 +82,8 @@ protected:
 	void StartSprint();
 	void StopSprint();
 
-	void StartCrouching();
+	void ToggleCrouch();
+	//void StopCrouching();
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -95,8 +96,8 @@ public:
 
 	// Returns IsSprinting
 	FORCEINLINE bool GetSprinting() const { return IsSprinting; }
-	// Returns IsCrouching 
-	FORCEINLINE bool GetCrouching() const { return IsCrouching; }
+	// Change capsule size depending on anim state.
+	void ToggleCapsuleSize();
 
 	FVector2f GetCapsuleFull() { return FullCapsule; }
 	FVector2f GetCapsuleHalf() { return HalfCapsule; }

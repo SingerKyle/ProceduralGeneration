@@ -14,6 +14,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "AnimationInstance/PAnimInstance.h"
 
 // Sets default values
 AParkourCharacter::AParkourCharacter()
@@ -124,26 +125,26 @@ void AParkourCharacter::StopSprint()
 	SetSprinting();
 }
 
-void AParkourCharacter::StartCrouching()
+void AParkourCharacter::ToggleCrouch()
 {
 	if (MechanicComponent)
 	{
-		// probably a better way to do this, look into later
-		if (!GetCrouching()) // if player is already crouching / sliding
+		if (!IsCrouching)
 		{
-			if (MechanicComponent->StartMechanic(this, SlideMechanicTag))
+			if (!MechanicComponent->StartMechanic(this, SlideMechanicTag))
 			{
-				SetCrouching();
+				UE_LOG(LogTemp, Warning, TEXT("Can't Start Crouching/Sliding"));
 			}
 		}
-		else // if player is not crouching
+		else
 		{
-			if (MechanicComponent->StopMechanic(this, SlideMechanicTag))
+			if (!MechanicComponent->StopMechanic(this, SlideMechanicTag))
 			{
-				SetCrouching();
+				UE_LOG(LogTemp, Warning, TEXT("Can't Start Crouching/Sliding"));
 			}
 		}
 
+		SetCrouching();
 	}
 }
 
@@ -152,7 +153,7 @@ void AParkourCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	CrouchTimeline.TickTimeline(DeltaTime);
+	// Check if AnimInstance is crouching
 }
 
 // Called to bind functionality to input
@@ -177,8 +178,20 @@ void AParkourCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AParkourCharacter::StartSprint);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AParkourCharacter::StopSprint);
 
-		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AParkourCharacter::StartCrouching);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AParkourCharacter::ToggleCrouch);
+	}
+}
 
+void AParkourCharacter::ToggleCapsuleSize()
+{
+	UPAnimInstance* AnimInstance = Cast<UPAnimInstance>(GetMesh()->GetAnimInstance());
+	if (AnimInstance->GetCrouching())
+	{
+		GetCapsuleComponent()->SetCapsuleSize(HalfCapsule.X, HalfCapsule.Y);
+	}
+	else
+	{
+		GetCapsuleComponent()->SetCapsuleSize(FullCapsule.X, FullCapsule.Y);
 	}
 }
 

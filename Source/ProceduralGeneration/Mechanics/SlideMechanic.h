@@ -35,10 +35,4 @@ protected:
 	UPROPERTY() AParkourCharacter* Player;
 
 	UPROPERTY() UMovementComponent* MovementComp;
-
-	// are we crouching - not moving
-	bool IsCrouching;
-
-	// are we sliding - moving
-	bool IsSliding;
 };
