@@ -46,6 +46,7 @@ void UBaseMechanic::OnMechanicRemoved_Implementation(AActor* Actor)
 
 void UBaseMechanic::TickMechanic_Implementation(float DeltaTime)
 {
+
 }
 
 UMechanicsComponent* UBaseMechanic::GetOwningComponent() const
@@ -61,6 +62,8 @@ void UBaseMechanic::StartMechanic_Implementation(AActor* Actor)
 
 	IsRunning = true;
 	OwningActor = Actor;
+
+	
 
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("BaseMechanic StartMechanic Function"));
 }

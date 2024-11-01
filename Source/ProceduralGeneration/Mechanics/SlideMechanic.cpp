@@ -36,17 +36,16 @@ void USlideMechanic::StartMechanic_Implementation(AActor* Actor)
 	UPAnimInstance* AnimInstance = Cast<UPAnimInstance>(Player->GetMesh()->GetAnimInstance());
 
 	// Check velocity on start - move these to own variables later
-	if (Player->GetMovementComponent()->Velocity.X > 0)
+	if (Player->GetSprinting())
 	{
 		AnimInstance->SetSliding(true);
 	}
-	// If velocity > value then set slide bool
+	// If velocity > RUNSPEED value then set slide bool
 	else
 	{
 		AnimInstance->SetCrouching(true);
 	}
 	// else set crouch bool
-
 
 	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Crouching and Sliding!"));
 }
