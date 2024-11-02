@@ -51,8 +51,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
 	bool IsSprinting = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
-	bool IsCrouching = false;
+//	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
+//	bool IsCrouching = false;
 
 	FTimeline CrouchTimeline;
 
@@ -82,8 +82,8 @@ protected:
 	void StartSprint();
 	void StopSprint();
 
-	void ToggleCrouch();
-	//void StopCrouching();
+	void StartCrouch();
+	void StopCrouch();
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -102,6 +102,6 @@ public:
 	FVector2f GetCapsuleFull() { return FullCapsule; }
 	FVector2f GetCapsuleHalf() { return HalfCapsule; }
 
-	void SetCrouching();
+	//void SetCrouching();
     void SetSprinting();
 };

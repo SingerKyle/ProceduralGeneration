@@ -125,26 +125,29 @@ void AParkourCharacter::StopSprint()
 	SetSprinting();
 }
 
-void AParkourCharacter::ToggleCrouch()
+void AParkourCharacter::StartCrouch()
 {
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("StartCrouch called"));
+
 	if (MechanicComponent)
 	{
-		if (!IsCrouching)
+		if (!MechanicComponent->StartMechanic(this, SlideMechanicTag))
 		{
-			if (!MechanicComponent->StartMechanic(this, SlideMechanicTag))
-			{
-				UE_LOG(LogTemp, Warning, TEXT("Can't Start Crouching/Sliding"));
-			}
+			UE_LOG(LogTemp, Warning, TEXT("Can't Start Crouching/Sliding"));
 		}
-		else
-		{
-			if (!MechanicComponent->StopMechanic(this, SlideMechanicTag))
-			{
-				UE_LOG(LogTemp, Warning, TEXT("Can't Start Crouching/Sliding"));
-			}
-		}
+	}
+}
 
-		SetCrouching();
+void AParkourCharacter::StopCrouch()
+{
+	UE_LOG(LogTemp, Warning, TEXT("InStopCrouch"));
+
+	if (MechanicComponent)
+	{
+		if (!MechanicComponent->StopMechanic(this, SlideMechanicTag))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Can't Start Crouching/Sliding"));
+		}
 	}
 }
 
@@ -178,7 +181,8 @@ void AParkourCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AParkourCharacter::StartSprint);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AParkourCharacter::StopSprint);
 
-		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AParkourCharacter::ToggleCrouch);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AParkourCharacter::StartCrouch);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &AParkourCharacter::StopCrouch);
 	}
 }
 
@@ -195,10 +199,10 @@ void AParkourCharacter::ToggleCapsuleSize()
 	}
 }
 
-void AParkourCharacter::SetCrouching()
+/*void AParkourCharacter::SetCrouching()
 {
 	IsCrouching = !IsCrouching;
-}
+}*/
 
 void AParkourCharacter::SetSprinting()
 {

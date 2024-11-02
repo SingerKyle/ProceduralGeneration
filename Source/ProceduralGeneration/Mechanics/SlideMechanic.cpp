@@ -4,6 +4,7 @@
 #include "ProceduralGeneration/ParkourCharacter.h"
 #include "ProceduralGeneration/AnimationInstance/PAnimInstance.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "ProceduralGeneration/MechanicComponents/MechanicsComponent.h"
 #include "ProceduralGeneration/PGameTags.h"
 
 USlideMechanic::USlideMechanic()
@@ -30,6 +31,7 @@ void USlideMechanic::OnMechanicRemoved_Implementation(AActor* Actor)
 
 void USlideMechanic::StartMechanic_Implementation(AActor* Actor)
 {
+
 	Super::StartMechanic_Implementation(Actor);
 
 	Player = Cast<AParkourCharacter>(Actor);
@@ -39,11 +41,13 @@ void USlideMechanic::StartMechanic_Implementation(AActor* Actor)
 	if (Player->GetSprinting())
 	{
 		AnimInstance->SetSliding(true);
+		bIsSliding = true;
 	}
 	// If velocity > RUNSPEED value then set slide bool
 	else
 	{
 		AnimInstance->SetCrouching(true);
+		bIsCrouching = true;
 	}
 	// else set crouch bool
 
@@ -60,18 +64,18 @@ void USlideMechanic::StopMechanic_Implementation(AActor* Actor)
 	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("STOP!"));
 	AnimInstance->SetCrouching(false);
 	AnimInstance->SetSliding(false);
+	bIsCrouching = false;
+	bIsSliding = false;
 }
 
 void USlideMechanic::TickMechanic_Implementation(float DeltaTime) // Replace with Async tick
 {
 	Super::TickMechanic_Implementation(DeltaTime);
 
-
+	// if the player velocity goes to below the and the player is sliding then set crouching
 }
 
 bool USlideMechanic::CanStart_Implementation(AActor* Actor)
 {
-	Super::CanStart_Implementation(Actor);
-
-	return false;
+	return Super::CanStart_Implementation(Actor);
 }

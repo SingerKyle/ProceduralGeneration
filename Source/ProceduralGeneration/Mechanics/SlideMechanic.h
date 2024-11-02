@@ -35,4 +35,12 @@ protected:
 	UPROPERTY() AParkourCharacter* Player;
 
 	UPROPERTY() UMovementComponent* MovementComp;
+
+	UPROPERTY(EditAnywhere, Category = "Tags") FGameplayTagContainer SlidingTags;
+
+	// Whether we are currently crouching
+	bool bIsCrouching;
+
+	// Whether we are currently sliding
+	bool bIsSliding;
 };

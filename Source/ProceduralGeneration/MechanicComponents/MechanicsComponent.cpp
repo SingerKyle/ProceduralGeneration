@@ -97,7 +97,7 @@ void UMechanicsComponent::RemoveMechanic(UBaseMechanic* MechanicToRemove)
 
 bool UMechanicsComponent::StartMechanic(AActor* Actor, FGameplayTag MechanicTag)
 {
-	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Entering StartMechanic Function"));
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Entering StartMechanic Function"));
 
 	if (GetActiveTags().HasAnyExact(GetBlockedTags()))
 	{
@@ -109,11 +109,11 @@ bool UMechanicsComponent::StartMechanic(AActor* Actor, FGameplayTag MechanicTag)
 	{
 		if (Mechanics[i] && Mechanics[i]->MechanicTag.MatchesTagExact(MechanicTag))
 		{
-			//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Found Mechanic from tag"));
-			if (Mechanics[i]->CanStart(Actor))
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Found Mechanic from tag"));
+			if (!Mechanics[i]->CanStart(Actor))
 			{
 				// log no start
-				//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Mechanic Won't start"));
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Mechanic Won't start"));
 				continue;
 			}
 

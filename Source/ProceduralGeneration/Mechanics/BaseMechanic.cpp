@@ -28,9 +28,11 @@ bool UBaseMechanic::CanStart_Implementation(AActor* Actor)
 
 	if (OwnerComponent->GetActiveTags().HasAnyExact(BlockedTags))
 	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Canstart is false"));
 		return false;
 	}
 
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Canstart is true"));
 	return true;
 }
 
