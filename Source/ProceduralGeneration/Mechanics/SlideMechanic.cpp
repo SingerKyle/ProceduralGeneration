@@ -19,7 +19,9 @@ void USlideMechanic::OnMechanicAdded_Implementation(AActor* Actor)
 	Player = Cast<AParkourCharacter>(Actor);
 	MovementComp = Player->GetCharacterMovement<UMovementComponent>();
 
-	IsRunning = false;
+	bIsRunning = false;
+	bIsCrouching = false;
+	bIsSliding = false;
 
 	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Added!"));
 }
@@ -41,17 +43,32 @@ void USlideMechanic::StartMechanic_Implementation(AActor* Actor)
 	if (Player->GetSprinting())
 	{
 		AnimInstance->SetSliding(true);
-		bIsSliding = true;
+		Player->SwitchMovementState(EMovementState::SLIDING);
+		StartSlide();
 	}
 	// If velocity > RUNSPEED value then set slide bool
 	else
 	{
 		AnimInstance->SetCrouching(true);
+		Player->SwitchMovementState(EMovementState::CROUCHING);
 		bIsCrouching = true;
 	}
-	// else set crouch bool
 
 	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Crouching and Sliding!"));
+}
+
+void USlideMechanic::StartSlide()
+{
+	bIsSliding = true;
+
+	GetOwningComponent()->GetActiveTags().AppendTags(SlidingTags);
+
+	UPAnimInstance* AnimInstance = Cast<UPAnimInstance>(Player->GetMesh()->GetAnimInstance());
+	if (AnimInstance && MechanicMontage) // Ensure the anim instance and montage are valid
+	{
+		AnimInstance->Montage_Play(MechanicMontage); // Play the montage
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Sliding!"));
+	}
 }
 
 void USlideMechanic::StopMechanic_Implementation(AActor* Actor)
@@ -73,6 +90,7 @@ void USlideMechanic::TickMechanic_Implementation(float DeltaTime) // Replace wit
 	Super::TickMechanic_Implementation(DeltaTime);
 
 	// if the player velocity goes to below the and the player is sliding then set crouching
+
 }
 
 bool USlideMechanic::CanStart_Implementation(AActor* Actor)

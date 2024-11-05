@@ -9,12 +9,13 @@ void UBaseMechanic::Initialize(UMechanicsComponent* NewMechanic)
 {
 	MechanicComponent = NewMechanic;
 
-	IsRunning = false;
+	bIsRunning = false;
+
 }
 
 bool UBaseMechanic::GetIsRunning() const
 {
-	return IsRunning;
+	return bIsRunning;
 }
 
 bool UBaseMechanic::CanStart_Implementation(AActor* Actor)
@@ -62,7 +63,7 @@ void UBaseMechanic::StartMechanic_Implementation(AActor* Actor)
 
 	OwnerComponent->GetActiveTags().AppendTags(GivenTags);
 
-	IsRunning = true;
+	bIsRunning = true;
 	OwningActor = Actor;
 
 	
@@ -75,7 +76,7 @@ void UBaseMechanic::StopMechanic_Implementation(AActor* Actor)
 	UMechanicsComponent* OwnerComponent = GetOwningComponent();
 	OwnerComponent->GetActiveTags().RemoveTags(GivenTags);
 
-	IsRunning = false;
+	bIsRunning = false;
 	OwningActor = Actor;
 
 

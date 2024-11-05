@@ -15,6 +15,15 @@ class UMechanicsComponent;
 class UInputAction;
 struct FInputActionValue;
 
+UENUM(BlueprintType)
+enum EMovementState
+{
+	WALKING UMETA(DisplayName = "Walking"),
+	RUNNING UMETA(DisplayName = "Running"),
+	CROUCHING UMETA(DisplayName = "Crouching"),
+	SLIDING UMETA(DisplayName = "Sliding")
+};
+
 UCLASS(config = game)
 class PROCEDURALGENERATION_API AParkourCharacter : public ACharacter
 {
@@ -48,12 +57,20 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* CrouchAction;
 
+	// Vault / Mantle Input Action
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* InteractAction;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
 	bool IsSprinting = false;
 
 //	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
 //	bool IsCrouching = false;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true")) bool bCanVault = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true")) bool bCanMantle = false;
+	
 	FTimeline CrouchTimeline;
 
 	UPROPERTY(EditAnywhere, Category = "TimeLine") UCurveFloat* CrouchCurveFloat;
@@ -67,6 +84,37 @@ protected:
 	// Action Tags - could make this better
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true")) FGameplayTag SlideMechanicTag;
 
+	UPROPERTY(BlueprintReadWrite, Category = "MovementState", meta = (AllowPrivateAccess = "true"))  TEnumAsByte<EMovementState> MovementState;
+
+	// Speed Variables
+	UPROPERTY(BlueprintReadOnly, Category = "Speeds", meta = (AllowPrivateAccess = "true")) float WalkSpeed;
+	UPROPERTY(BlueprintReadOnly, Category = "Speeds", meta = (AllowPrivateAccess = "true")) float RunSpeed;
+	UPROPERTY(BlueprintReadOnly, Category = "Speeds", meta = (AllowPrivateAccess = "true")) float CrouchSpeed;
+
+	// VAULTING
+	FVector VaultStart;
+	FVector VaultMiddle;
+	FVector VaultLand;
+	int VaultDistance;
+
+	UPROPERTY(EditAnywhere, Category = "Animation") TArray<UAnimMontage*> VaultMontages;
+
+	// Motion Warping Component
+
+	UPROPERTY(EditAnywhere, Category = "Vaulting", meta = (AllowPrivateAccess = "true")) float InitialTraceLength;
+	UPROPERTY(EditAnywhere, Category = "Vaulting", meta = (AllowPrivateAccess = "true")) float SecondaryTraceZOffset;
+	UPROPERTY(EditAnywhere, Category = "Vaulting", meta = (AllowPrivateAccess = "true")) float SecondaryTraceGap;
+	UPROPERTY(EditAnywhere, Category = "Vaulting", meta = (AllowPrivateAccess = "true")) float LandingPositionForwardOffset;
+
+	// MANTLING
+UPROPERTY(EditAnywhere, Category = "Mantling", meta = (AllowPrivateAccess = "true")) UAnimMontage* MantleMontage;
+	
+	FVector MantlePosition1;
+	FVector MantlePosition2;
+	
+	UPROPERTY(EditAnywhere, Category = "Vaulting", meta = (AllowPrivateAccess = "true")) float MantleInitialTraceLength;
+	UPROPERTY(EditAnywhere, Category = "Vaulting", meta = (AllowPrivateAccess = "true")) float MantleSecondaryTraceZOffset;
+	UPROPERTY(EditAnywhere, Category = "Vaulting", meta = (AllowPrivateAccess = "true")) float MantleFallHeightMultiplier;
 public:
 	// Sets default values for this character's properties
 	AParkourCharacter();
@@ -84,6 +132,21 @@ protected:
 
 	void StartCrouch();
 	void StopCrouch();
+
+	// VAULTING
+	void Interact();
+	void VaultTrace();
+	void ApplyMotionWarping(FName WarpName, FVector WarpLocation);
+
+	UFUNCTION()
+	void OnVaultMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	// MANTLING
+	void MantleTrace();
+	void ApplyMantleMotionWarping(FName WarpName, FVector WarpLocation, float Offset);
+	UFUNCTION()
+	void OnMantleMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -93,6 +156,9 @@ public:
 
 	// Returns camera object
 	FORCEINLINE class UCameraComponent* GetTrueFirstPersonCamera() const { return TFPSCamera; }
+
+	void SwitchMovementState(EMovementState State);
+	FORCEINLINE EMovementState GetMovementState() { return MovementState; }
 
 	// Returns IsSprinting
 	FORCEINLINE bool GetSprinting() const { return IsSprinting; }

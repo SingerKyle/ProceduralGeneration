@@ -49,8 +49,11 @@ public:
 	// the gameplay tag associated with this mechanic
 	UPROPERTY(EditAnywhere, Category = "Mechanics") FGameplayTag MechanicTag;
 
+	//UFUNCTION(BlueprintNativeEvent, Category = "Mechanics") void PlayMontage(UAnimMontage* MontageToPlay);
+
 protected:
 	UPROPERTY() UMechanicsComponent* MechanicComponent;
+	UPROPERTY(EditAnywhere, Category = "Animation") UAnimMontage* MechanicMontage;
 
 	UFUNCTION(BlueprintCallable, Category = "Action") UMechanicsComponent* GetOwningComponent() const;
 
@@ -58,7 +61,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Gameplay Tags") FGameplayTagContainer GivenTags;
 	UPROPERTY(EditDefaultsOnly, Category = "Gameplay Tags") FGameplayTagContainer BlockedTags;
 
-	UPROPERTY() bool IsRunning;
+	//UPROPERTY(BlueprintReadWrite, Category = "Animation") UPAnimInstance* AnimInstance;
+
+	UPROPERTY() bool bIsRunning;
 	
 	// Actor that owns mechanic
 	UPROPERTY(BlueprintReadOnly) AActor* OwningActor;

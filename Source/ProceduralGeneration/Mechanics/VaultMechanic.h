@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "BaseMechanic.h"
-#include "SlideMechanic.generated.h"
+#include "VaultMechanic.generated.h"
 
 class AParkourCharacter;
 class UMovementComponent;
@@ -13,13 +13,11 @@ class UMovementComponent;
  * 
  */
 UCLASS()
-class PROCEDURALGENERATION_API USlideMechanic : public UBaseMechanic
+class PROCEDURALGENERATION_API UVaultMechanic : public UBaseMechanic
 {
 	GENERATED_BODY()
 	
 public:
-	USlideMechanic();
-
 	virtual void OnMechanicAdded_Implementation(AActor* Actor) override;
 	virtual void OnMechanicRemoved_Implementation(AActor* Actor) override;
 
@@ -30,29 +28,10 @@ public:
 	virtual void TickMechanic_Implementation(float DeltaTime) override;
 	virtual bool CanStart_Implementation(AActor* Actor) override;
 
-	void StartSlide();
-
-
 protected:
-
 	UPROPERTY() AParkourCharacter* Player;
 
 	UPROPERTY() UMovementComponent* MovementComp;
 
-	UPROPERTY(EditAnywhere, Category = "Tags") FGameplayTagContainer CrouchTags;
-
-	UPROPERTY(EditAnywhere, Category = "Tags") FGameplayTagContainer SlidingTags;
-
-	// Slide Physics Values
-	UPROPERTY(EditAnywhere, Category = "Physics") float SlideForceVal;
-	UPROPERTY(EditAnywhere, Category = "Physics") float SlideDuration;
-	UPROPERTY(EditAnywhere, Category = "Physics") float MaxSlideSpeed;
-
-	float WalkSpeed;
-
-	// Whether we are currently crouching
-	bool bIsCrouching;
-
-	// Whether we are currently sliding
-	bool bIsSliding;
+	UPROPERTY(EditAnywhere, Category = "Tags") FGameplayTagContainer VaultTags;
 };
