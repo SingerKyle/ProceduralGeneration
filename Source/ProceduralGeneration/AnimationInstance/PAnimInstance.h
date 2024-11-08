@@ -15,6 +15,7 @@ class PROCEDURALGENERATION_API UPAnimInstance : public UAnimInstance
 	GENERATED_BODY()
 	
 	UPAnimInstance();
+
 public:
 	FORCEINLINE UFUNCTION() bool GetCrouching() { return bIsCrouching; }
 	void SetCrouching(bool Val);

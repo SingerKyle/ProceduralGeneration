@@ -175,6 +175,11 @@ void AParkourCharacter::StopCrouch()
 
 void AParkourCharacter::Interact()
 {
+	if (bIsPerformingAction)
+	{
+		return;
+	}
+	
 	// Check if player is moving fast enough to vault AND not falling.
 	if (GetCharacterMovement()->Velocity.Length() > WalkSpeed - 150.f && !GetCharacterMovement()->IsFalling())
 	{
@@ -183,6 +188,7 @@ void AParkourCharacter::Interact()
 
 		if (bCanVault)
 		{
+			bIsPerformingAction = true;
 			bCanVault = false;
 			GetCharacterMovement()->SetMovementMode(MOVE_Flying);
 			//GetCharacterMovement()->Velocity = FVector::ZeroVector;
@@ -200,7 +206,7 @@ void AParkourCharacter::Interact()
 			UPAnimInstance* AnimInstance = Cast<UPAnimInstance>(GetMesh()->GetAnimInstance());
 			if (AnimInstance && VaultMontages.Num() > 0) // Ensure the anim instance and montage are valid
 				{
-				TFPSCamera->bUsePawnControlRotation = false;
+				//Camera->bUsePawnControlRotation = false;
 				
 				AnimInstance->OnMontageEnded.AddDynamic(this, &AParkourCharacter::OnVaultMontageEnded);
 				
@@ -213,6 +219,8 @@ void AParkourCharacter::Interact()
 			MantleTrace();
 			if(bCanMantle)
 			{
+				bIsPerformingAction = true;
+			
 				// Set Actor Collision
 				SetActorEnableCollision(false);
 				GetCharacterMovement()->SetMovementMode(MOVE_Flying);
@@ -223,9 +231,8 @@ void AParkourCharacter::Interact()
 				UPAnimInstance* AnimInstance = Cast<UPAnimInstance>(GetMesh()->GetAnimInstance());
 				if (AnimInstance && MantleMontage) // Ensure the anim instance and montage are valid
 					{
-					TFPSCamera->bUsePawnControlRotation = false;
 				
-					AnimInstance->OnMontageEnded.AddDynamic(this, &AParkourCharacter::OnVaultMontageEnded);
+					AnimInstance->OnMontageEnded.AddDynamic(this, &AParkourCharacter::OnMantleMontageEnded);
 				
 					AnimInstance->Montage_Play(MantleMontage); // Play the montage
 					//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Sliding!"));
@@ -242,6 +249,8 @@ void AParkourCharacter::Interact()
 		MantleTrace();
 		if(bCanMantle)
 		{
+			bIsPerformingAction = true;
+			
 			// Set Actor Collision
 			SetActorEnableCollision(false);
 			GetCharacterMovement()->SetMovementMode(MOVE_Flying);
@@ -303,7 +312,7 @@ void AParkourCharacter::ApplyMantleMotionWarping(FName WarpName, FVector WarpLoc
 		//WarpTarget.GetTargetTrasform().SetRotation(GetActorRotation().Quaternion());
 
 		// Log the warping locations
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("VaultStart: %s"), *WarpLocation.ToString()));
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("MantleStart: %s"), *WarpLocation.ToString()));
 				
 		WarpComponent->AddOrUpdateWarpTarget(WarpTarget);
 	}
@@ -314,10 +323,12 @@ void AParkourCharacter::OnMantleMontageEnded(UAnimMontage* Montage, bool bInterr
 	// Optionally, clear the delegate if you don't want it to trigger for other montages
 	if (UPAnimInstance* AnimInstance = Cast<UPAnimInstance>(GetMesh()->GetAnimInstance()))
 	{
+		AnimInstance->OnMontageEnded.RemoveDynamic(this, &AParkourCharacter::OnMantleMontageEnded);
 		AnimInstance->OnMontageEnded.Clear();
 	}
 
 	SetActorEnableCollision(true);
+	bIsPerformingAction = false;
 
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Mantle Montage Ended, Movement Mode Set to Walking"));
 
@@ -326,13 +337,17 @@ void AParkourCharacter::OnMantleMontageEnded(UAnimMontage* Montage, bool bInterr
 
 void AParkourCharacter::OnVaultMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
+	
 	// Optionally, clear the delegate if you don't want it to trigger for other montages
 	if (UPAnimInstance* AnimInstance = Cast<UPAnimInstance>(GetMesh()->GetAnimInstance()))
 	{
+		AnimInstance->OnMontageEnded.RemoveDynamic(this, &AParkourCharacter::OnVaultMontageEnded);
 		AnimInstance->OnMontageEnded.Clear();
 	}
 
-	TFPSCamera->bUsePawnControlRotation = true;
+	bIsPerformingAction = false;
+
+	//TFPSCamera->bUsePawnControlRotation = true;
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Vault Montage Ended, Movement Mode Set to Walking"));
 	
 	// Reset movement mode back to walking
@@ -408,7 +423,7 @@ void AParkourCharacter::MantleTrace()
 				{
 					float ZOffset = MantlePosition2.Z + 100;
 					Start = FVector(MantlePosition1.X, MantlePosition1.Y, ZOffset);
-					End = MantlePosition2 + FVector(0,0, 100);
+					End = MantlePosition2 + FVector(0,0, 120);
 
 					DrawDebugLine(GetWorld(), Start, End, FColor::Purple, false, 5.0f, 0, 2.0f);
 					DrawDebugSphere(GetWorld(), MantlePosition1, SphereRadius, 12, FColor::Black, false, 5.0f);
@@ -536,7 +551,7 @@ void AParkourCharacter::VaultTrace()
 					}
 					else
 					{
-						VaultLand = OutHit.Location;
+						VaultLand = OutHit.Location +FVector(0,0,-20.f);
 						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("VAULT LAND LOCATION"));
 						DrawDebugSphere(GetWorld(), VaultLand, SphereRadius, 12, FColor::Red, false, 5.0f);
 					}

@@ -115,6 +115,8 @@ UPROPERTY(EditAnywhere, Category = "Mantling", meta = (AllowPrivateAccess = "tru
 	UPROPERTY(EditAnywhere, Category = "Vaulting", meta = (AllowPrivateAccess = "true")) float MantleInitialTraceLength;
 	UPROPERTY(EditAnywhere, Category = "Vaulting", meta = (AllowPrivateAccess = "true")) float MantleSecondaryTraceZOffset;
 	UPROPERTY(EditAnywhere, Category = "Vaulting", meta = (AllowPrivateAccess = "true")) float MantleFallHeightMultiplier;
+
+	bool bIsPerformingAction = false;
 public:
 	// Sets default values for this character's properties
 	AParkourCharacter();
@@ -167,6 +169,9 @@ public:
 
 	FVector2f GetCapsuleFull() { return FullCapsule; }
 	FVector2f GetCapsuleHalf() { return HalfCapsule; }
+
+	// Maybe change - used to pass walk speed to components
+	FORCEINLINE float GetPlayerWalkSpeed() const { return WalkSpeed; }
 
 	//void SetCrouching();
     void SetSprinting();

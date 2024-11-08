@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "BaseMechanic.h"
+#include "Components/TimelineComponent.h"
 #include "SlideMechanic.generated.h"
 
 class AParkourCharacter;
@@ -31,7 +32,11 @@ public:
 	virtual bool CanStart_Implementation(AActor* Actor) override;
 
 	void StartSlide();
+	void StopSlide();
 
+	// Slide Timeline Function
+	UFUNCTION() void UpdateCapsule(float Value) const;
+	UFUNCTION() void UpdateMesh(float Value) const;
 
 protected:
 
@@ -52,7 +57,12 @@ protected:
 
 	// Whether we are currently crouching
 	bool bIsCrouching;
-
 	// Whether we are currently sliding
 	bool bIsSliding;
+
+	// Timeline variables
+	UPROPERTY() FTimeline SlideCapsuleScaleTimeline;
+	UPROPERTY() FTimeline SlideMeshLocationTimeline;
+	UPROPERTY(EditAnywhere, Category = "Timeline Float") UCurveFloat* TimelineCapsuleCurveFloat;
+	UPROPERTY(EditAnywhere, Category = "Timeline Float") UCurveFloat* TimelineMeshCurveFloat;
 };
