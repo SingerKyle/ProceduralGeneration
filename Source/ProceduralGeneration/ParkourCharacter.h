@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "AnimationInstance/PAnimInstance.h"
 #include "GameFramework/Character.h"
 #include "Components/TimelineComponent.h"
 #include "ParkourCharacter.generated.h"
@@ -107,7 +108,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Vaulting", meta = (AllowPrivateAccess = "true")) float LandingPositionForwardOffset;
 
 	// MANTLING
-UPROPERTY(EditAnywhere, Category = "Mantling", meta = (AllowPrivateAccess = "true")) UAnimMontage* MantleMontage;
+	UPROPERTY(EditAnywhere, Category = "Mantling", meta = (AllowPrivateAccess = "true")) UAnimMontage* MantleMontage;
 	
 	FVector MantlePosition1;
 	FVector MantlePosition2;
@@ -117,6 +118,10 @@ UPROPERTY(EditAnywhere, Category = "Mantling", meta = (AllowPrivateAccess = "tru
 	UPROPERTY(EditAnywhere, Category = "Vaulting", meta = (AllowPrivateAccess = "true")) float MantleFallHeightMultiplier;
 
 	bool bIsPerformingAction = false;
+
+	// FALL DAMAGE AND LANDING
+	UPAnimInstance* AnimInstance;
+	UPROPERTY(EditAnywhere, Category = "Mantling", meta = (AllowPrivateAccess = "true")) TArray<UAnimMontage*> FallMontages;
 public:
 	// Sets default values for this character's properties
 	AParkourCharacter();
@@ -125,6 +130,12 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	// Check for fall animations
+	void CheckForFall();
+	virtual void Landed(const FHitResult& Hit) override;
+
+	UFUNCTION() void OnFallMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
 	void Move(const FInputActionValue& Value);
 
 	void Look(const FInputActionValue& Value);
@@ -132,6 +143,8 @@ protected:
 	void StartSprint();
 	void StopSprint();
 
+	virtual void Jump() override;
+	
 	void StartCrouch();
 	void StopCrouch();
 

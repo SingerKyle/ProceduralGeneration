@@ -24,7 +24,7 @@ public:
 	// Get component from Actor
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Mechanics") static UMechanicsComponent* GetMechanicsComponent(AActor* GetActor);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "GameplayTags") FGameplayTagContainer GetActiveTags();
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "GameplayTags") FGameplayTagContainer& GetActiveTags();
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "GameplayTags") FGameplayTagContainer GetBlockedTags();
 	FGameplayTag& GetMasterBlockedTag();
 

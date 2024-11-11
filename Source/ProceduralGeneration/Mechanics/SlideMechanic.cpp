@@ -2,6 +2,7 @@
 
 #include "SlideMechanic.h"
 
+#include "Chaos/Utilities.h"
 #include "Components/CapsuleComponent.h"
 #include "ProceduralGeneration/ParkourCharacter.h"
 #include "ProceduralGeneration/AnimationInstance/PAnimInstance.h"
@@ -10,7 +11,7 @@
 
 USlideMechanic::USlideMechanic()
 {
-	//MechanicTag = PGameTags::Mechanics_Slide.GetTag();
+	SlideSpeed = 750.f;
 }
 
 void USlideMechanic::OnMechanicAdded_Implementation(AActor* Actor)
@@ -18,6 +19,7 @@ void USlideMechanic::OnMechanicAdded_Implementation(AActor* Actor)
 	Super::OnMechanicAdded_Implementation(Actor);
 
 	Player = Cast<AParkourCharacter>(Actor);
+	AnimInstance = Cast<UPAnimInstance>(Player->GetMesh()->GetAnimInstance());
 	MovementComp = Player->GetCharacterMovement<UMovementComponent>();
 
 	bIsRunning = false;
@@ -51,7 +53,6 @@ void USlideMechanic::StartMechanic_Implementation(AActor* Actor)
 	Super::StartMechanic_Implementation(Actor);
 
 	Player = Cast<AParkourCharacter>(Actor);
-	UPAnimInstance* AnimInstance = Cast<UPAnimInstance>(Player->GetMesh()->GetAnimInstance());
 
 	// Check velocity of player to determine whether to slide or crouch.
 	if (Player->GetMovementComponent()->Velocity.Length() > Player->GetPlayerWalkSpeed() && !Player->GetMovementComponent()->IsFalling())
@@ -76,8 +77,7 @@ void USlideMechanic::StartSlide()
 	bIsSliding = true;
 
 	GetOwningComponent()->GetActiveTags().AppendTags(SlidingTags);
-
-	UPAnimInstance* AnimInstance = Cast<UPAnimInstance>(Player->GetMesh()->GetAnimInstance());
+	
 	if (AnimInstance && MechanicMontage) // Ensure the anim instance and montage are valid
 	{
 		AnimInstance->Montage_Play(MechanicMontage); // Play the montage
@@ -93,18 +93,23 @@ void USlideMechanic::StartSlide()
 
 void USlideMechanic::StopSlide()
 {
-	if (bIsCrouching || bIsSliding)
-	{
-		UPAnimInstance* AnimInstance = Cast<UPAnimInstance>(Player->GetMesh()->GetAnimInstance());
-		if (AnimInstance && MechanicMontage) // Ensure the anim instance and montage are valid
-			{
+	if (AnimInstance && EndSlideMontage && MechanicMontage) // Ensure the anim instance and montage are valid
+		{
 			AnimInstance->Montage_StopWithBlendOut(0.2f ,MechanicMontage); // Play the montage
+		if(bIsCrouching)
+		{
+			Player->GetCharacterMovement()->SetMovementMode(MOVE_Falling);
+		}
+		else
+		{
+			AnimInstance->Montage_Play(EndSlideMontage);
+		}
 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("NOT Sliding!"));
-			}
-		SlideCapsuleScaleTimeline.Reverse();
-		//Player->GetMesh()->SetRelativeLocation(FVector(0,0, -90));
-		SlideMeshLocationTimeline.Reverse();
-	}
+		}
+	
+	SlideCapsuleScaleTimeline.Reverse();
+	Player->GetMesh()->SetRelativeRotation(FRotator(0,-90, 0));
+	SlideMeshLocationTimeline.Reverse();
 }
 
 void USlideMechanic::UpdateCapsule(float Value) const
@@ -138,20 +143,61 @@ void USlideMechanic::UpdateMesh(float Value) const
 	}
 }
 
+void USlideMechanic::SetSlideVelocity(FVector NewSlideVelocity)
+{
+	SlideVelocity = NewSlideVelocity;
+}
+
+void USlideMechanic::CheckShouldContinueSlide()
+{
+	if(bIsSliding)
+	{
+		const FHitResult& Floor = Player->GetCharacterMovement()->CurrentFloor.HitResult;
+		const float SlideAngle = GetSlideSlope(Floor.Normal);
+
+		if(FMath::IsNearlyZero(SlideAngle))
+		{
+			Player->GetCharacterMovement()->AddImpulse(Player->GetCharacterMovement()->Velocity.GetSafeNormal() * SlideSpeed);
+		}
+		else if (Player->GetVelocity().Length() != 0)
+		{
+			const float ActualSlideForce = SlideAngle > 1.6f ? SlideSpeed / SlideAngle : SlideSpeed;
+			
+			Player->GetCharacterMovement()->AddImpulse(Player->GetCharacterMovement()->Velocity.GetSafeNormal() * ActualSlideForce);
+		}
+		else
+		{
+			StopSlide();
+		}
+
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Speed - %f"), Player->GetCharacterMovement()->Velocity.Length()));
+	}
+}
+
+float USlideMechanic::GetSlideSlope(const FVector& FloorNormal)
+{
+	const float AngleRadians = FMath::Acos(FVector::DotProduct(FloorNormal, Player->GetVelocity()));
+	return FMath::RadiansToDegrees(AngleRadians);
+}
+
 void USlideMechanic::StopMechanic_Implementation(AActor* Actor)
 {
-	Super::StopMechanic_Implementation(Actor);
-
 	Player = Cast<AParkourCharacter>(Actor);
-	UPAnimInstance* AnimInstance = Cast<UPAnimInstance>(Player->GetMesh()->GetAnimInstance());
+	if(Player->GetCharacterMovement()->IsFalling())
+	{
+		return;
+	}
+	
+	Super::StopMechanic_Implementation(Actor);
 
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("STOP!"));
 	AnimInstance->SetCrouching(false);
 	AnimInstance->SetSliding(false);
-	bIsCrouching = false;
-	bIsSliding = false;
 
 	StopSlide();
+	
+	bIsCrouching = false;
+	bIsSliding = false;
 }
 
 void USlideMechanic::TickMechanic_Implementation(float DeltaTime) // Replace with Async tick
@@ -171,14 +217,12 @@ void USlideMechanic::TickMechanic_Implementation(float DeltaTime) // Replace wit
 	if (bIsSliding)
 	{
 		FHitResult SphereHitResult;
-		FVector Start = Player->GetActorLocation();
-		FVector End = Player->GetActorLocation();
+		FVector Start = Player->GetMesh()->GetComponentTransform().GetLocation();
+		FVector End = Player->GetMesh()->GetComponentTransform().GetLocation();
 		FCollisionQueryParams CollisionParams;
-
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Tick?"));
 		
 		// Draw debug sphere for each trace in the loop
-		DrawDebugCapsule(GetWorld(), Start, 4, 18, FQuat::Identity, FColor::Yellow, false, 5.0f);
+		//DrawDebugCapsule(GetWorld(), Start, 4, 18, FQuat::Identity, FColor::Yellow, false, 5.0f);
 		
 		// Check if On Floor
 		if (GetWorld()->SweepSingleByChannel(SphereHitResult, Start, End, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeCapsule(4, 18), CollisionParams))
@@ -188,8 +232,68 @@ void USlideMechanic::TickMechanic_Implementation(float DeltaTime) // Replace wit
 		else
 		{
 			// set sliding to false
-			StopSlide();
+			StopMechanic_Implementation(Player);
+			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, TEXT("Stop slide!"));
 		}
+
+		CheckShouldContinueSlide();
+		
+		// Align player to floor while sliding
+		if (Player && bIsSliding)
+		{
+			
+			// Get floor hit result
+			const FHitResult HitResult = Player->GetCharacterMovement()->CurrentFloor.HitResult;
+			
+			if(Player->GetCharacterMovement()->GetMovementName() == "Walking")
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, TEXT("Walking!"));
+			}
+			
+			// Ensure the normal is valid (i.e., the character is on the ground)
+			if(HitResult.IsValidBlockingHit())
+			{
+				//GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, TEXT("Hit Floor!"));
+
+				// Get Normal for the floor
+				const FVector FloorNorm = HitResult.ImpactNormal;
+
+				const FRotator TargetRotation = FRotationMatrix::MakeFromXZ(Player->GetMesh()->GetForwardVector(), FloorNorm).Rotator();
+				const FRotator FinalTargetRotation = FRotator(TargetRotation.Pitch, Player->GetMesh()->GetRelativeRotation().Yaw, TargetRotation.Roll);
+				//const FRotator FinalTargetRotation = FRotator(TargetRotation.Pitch, Player->GetMesh()->GetRelativeRotation().Yaw, TargetRotation.Roll);
+
+				// Apply smooth rotation
+				Player->GetMesh()->SetRelativeRotation(FMath::RInterpTo(Player->GetMesh()->GetRelativeRotation(), FinalTargetRotation, DeltaTime, 3.f));
+				GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, TEXT("Set Rotation!"));
+				
+				//GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Yellow, FString::Printf(TEXT("ActorRotation - Pitch: %f  Roll: %f  Yaw: %f"), Player->GetActorRotation().Pitch, Player->GetActorRotation().Roll, Player->GetActorRotation().Yaw));
+				//GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Yellow, FString::Printf(TEXT("TargetRotation - Pitch: %f  Roll: %f  Yaw: %f"), TargetRotation.Pitch, TargetRotation.Roll, TargetRotation.Yaw));
+				//GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Yellow, FString::Printf(TEXT("FinalTargetRotation - Pitch: %f  Roll: %f  Yaw: %f"), FinalTargetRotation.Pitch, FinalTargetRotation.Roll, FinalTargetRotation.Yaw));
+				
+			}
+
+			Start = Player->GetMesh()->GetSocketLocation(FName("foot_l"));
+			// Turn offset into variable
+			Start += FVector (0,0,0);
+			End = Start;
+			CollisionParams.AddIgnoredActor(Player->GetCharacterMovement()->CurrentFloor.HitResult.GetActor());
+			
+			if (GetWorld()->SweepSingleByChannel(SphereHitResult, Start, End, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(20), CollisionParams))
+			{
+				FVector Normal = SphereHitResult.ImpactNormal;
+				float DotProduct = Normal.Dot(FVector(0,0,1));
+				float AngleRadians = FMath::Abs(FMath::Acos(FMath::Clamp(DotProduct, -1.f, 1.f)));
+				if(AngleRadians > 80) // make variable
+				{
+					
+				}
+				else
+				{
+					
+				}
+			}
+		}
+		
 	}
 	
 }

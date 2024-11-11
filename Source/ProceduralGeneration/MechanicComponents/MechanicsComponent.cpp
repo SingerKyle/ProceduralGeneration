@@ -24,7 +24,7 @@ UMechanicsComponent* UMechanicsComponent::GetMechanicsComponent(AActor* GetActor
 	return nullptr;
 }
 
-FGameplayTagContainer UMechanicsComponent::GetActiveTags()
+FGameplayTagContainer& UMechanicsComponent::GetActiveTags()
 {
 	return ActiveGameplayTags;
 }

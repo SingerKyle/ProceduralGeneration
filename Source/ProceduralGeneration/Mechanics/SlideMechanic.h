@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "BaseMechanic.h"
 #include "Components/TimelineComponent.h"
+#include "ProceduralGeneration/AnimationInstance/PAnimInstance.h"
 #include "SlideMechanic.generated.h"
 
 class AParkourCharacter;
@@ -34,14 +35,23 @@ public:
 	void StartSlide();
 	void StopSlide();
 
+	// Get Slope Angle
+	FVector2f GetSlopeDegreeAngle(FVector SurfaceNorm, FVector RightVector, FVector UpVector);
+	
 	// Slide Timeline Function
 	UFUNCTION() void UpdateCapsule(float Value) const;
 	UFUNCTION() void UpdateMesh(float Value) const;
 
+	FORCEINLINE FVector GetSlideVelocity() { return SlideVelocity; };
+	void SetSlideVelocity(FVector NewSlideVelocity);
+
+	void CheckShouldContinueSlide();
+	float GetSlideSlope(const FVector& FloorNormal);
+
 protected:
 
 	UPROPERTY() AParkourCharacter* Player;
-
+	UPROPERTY() UPAnimInstance* AnimInstance;
 	UPROPERTY() UMovementComponent* MovementComp;
 
 	UPROPERTY(EditAnywhere, Category = "Tags") FGameplayTagContainer CrouchTags;
@@ -49,9 +59,12 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Tags") FGameplayTagContainer SlidingTags;
 
 	// Slide Physics Values
-	UPROPERTY(EditAnywhere, Category = "Physics") float SlideForceVal;
+	UPROPERTY(EditAnywhere, Category = "Physics") FVector SlideVelocity;
+	UPROPERTY(EditAnywhere, Category = "Physics") float SlideSpeed;
 	UPROPERTY(EditAnywhere, Category = "Physics") float SlideDuration;
 	UPROPERTY(EditAnywhere, Category = "Physics") float MaxSlideSpeed;
+
+	UPROPERTY(EditAnywhere, Category = "Animation") UAnimMontage* EndSlideMontage;
 
 	float WalkSpeed;
 

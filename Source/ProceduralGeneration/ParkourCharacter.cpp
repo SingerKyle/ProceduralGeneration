@@ -6,6 +6,7 @@
 #include <Components/CapsuleComponent.h>
 #include <GameFramework/CharacterMovementComponent.h>
 #include <GameFramework/Controller.h>
+#include "GameplayTagContainer.h"
 
 #include "ProceduralGeneration/PGameTags.h"
 #include "ProceduralGeneration/MechanicComponents/MechanicsComponent.h"
@@ -18,6 +19,7 @@
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
 #include "MotionWarpingComponent.h"
+#include "EntitySystem/MovieSceneEntitySystemRunner.h"
 
 // Sets default values
 AParkourCharacter::AParkourCharacter()
@@ -75,6 +77,8 @@ AParkourCharacter::AParkourCharacter()
 void AParkourCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	AnimInstance = Cast<UPAnimInstance>(GetMesh()->GetAnimInstance());
 	
 	//Add Input Mapping Context
 	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
@@ -91,6 +95,75 @@ void AParkourCharacter::BeginPlay()
 		//timelineProgress.BindUFunction(this, FName("CrouchTimer"));
 		CrouchTimeline.AddInterpFloat(CrouchCurveFloat, timelineProgress);
 	}
+}
+
+void AParkourCharacter::CheckForFall()
+{
+	// get velocity at landing
+	float PlayerVelocity = GetVelocity().Z;
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("PlayerVelocity: %f"), PlayerVelocity));
+	//PlayerVelocity *= 1;
+
+	// Ensure the delegate is only added once
+	if (!AnimInstance->OnMontageEnded.IsBound())
+	{
+		AnimInstance->OnMontageEnded.AddDynamic(this, &AParkourCharacter::OnFallMontageEnded);
+	}
+	
+	// if fallheight larger than 750 then roll
+	if (PlayerVelocity < -850 && PlayerVelocity > -1250) // make variable
+	{
+		if(AnimInstance)
+		{
+			bIsPerformingAction = true;
+			TFPSCamera->bUsePawnControlRotation = false;
+			AnimInstance->Montage_Play(FallMontages[0]);
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Play 0"));
+			if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+			{
+				DisableInput(PlayerController);
+			}
+		}
+	}
+	else if (PlayerVelocity < -1251)
+	{
+		if(AnimInstance)
+		{
+			bIsPerformingAction = true;
+			TFPSCamera->bUsePawnControlRotation = false;
+			AnimInstance->Montage_Play(FallMontages[1]);
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Play 1"));
+			if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+			{
+				DisableInput(PlayerController);
+			}
+		}
+	}
+}
+
+void AParkourCharacter::Landed(const FHitResult& Hit)
+{
+	CheckForFall();
+	
+	Super::Landed(Hit);
+}
+
+void AParkourCharacter::OnFallMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("End Fall Montage"));
+	
+	if (AnimInstance)
+	{
+		AnimInstance->OnMontageEnded.RemoveDynamic(this, &AParkourCharacter::OnFallMontageEnded);
+		AnimInstance->OnMontageEnded.Clear();
+	}
+
+	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+	{
+		EnableInput(PlayerController);
+	}
+	TFPSCamera->bUsePawnControlRotation = true;
+	bIsPerformingAction = false;
 }
 
 void AParkourCharacter::Move(const FInputActionValue& Value)
@@ -141,6 +214,24 @@ void AParkourCharacter::StopSprint()
 {
 	SetSprinting();
 	SwitchMovementState(EMovementState::WALKING);
+}
+
+void AParkourCharacter::Jump()
+{
+	if(!MechanicComponent->GetActiveTags().HasTag(SlideMechanicTag))
+	{
+		if(AnimInstance->GetIsOnZipline())
+		{
+			GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+			const FVector LaunchVelocity = (GetActorForwardVector() * 250.f) + (GetActorUpVector() * 1000.f);
+			LaunchCharacter(LaunchVelocity, false, false);
+			Super::Jump();
+		}
+		else
+		{
+			Super::Jump();
+		}
+	}
 }
 
 void AParkourCharacter::StartCrouch()
@@ -203,7 +294,6 @@ void AParkourCharacter::Interact()
 			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("VaultMiddle: %s"), *VaultMiddle.ToString()));
 			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("VaultLand: %s"), *VaultLand.ToString()));
 			
-			UPAnimInstance* AnimInstance = Cast<UPAnimInstance>(GetMesh()->GetAnimInstance());
 			if (AnimInstance && VaultMontages.Num() > 0) // Ensure the anim instance and montage are valid
 				{
 				//Camera->bUsePawnControlRotation = false;
@@ -227,8 +317,7 @@ void AParkourCharacter::Interact()
 
 				ApplyMantleMotionWarping(FName("MantlePoint1"), MantlePosition1, -100);
 				ApplyMantleMotionWarping(FName("MantlePoint2"), MantlePosition2, 30);
-
-				UPAnimInstance* AnimInstance = Cast<UPAnimInstance>(GetMesh()->GetAnimInstance());
+				
 				if (AnimInstance && MantleMontage) // Ensure the anim instance and montage are valid
 					{
 				
@@ -257,8 +346,7 @@ void AParkourCharacter::Interact()
 
 			ApplyMantleMotionWarping(FName("MantlePoint1"), MantlePosition1, -100);
 			ApplyMantleMotionWarping(FName("MantlePoint2"), MantlePosition2, 30);
-
-			UPAnimInstance* AnimInstance = Cast<UPAnimInstance>(GetMesh()->GetAnimInstance());
+			
 			if (AnimInstance && MantleMontage) // Ensure the anim instance and montage are valid
 				{
 				
@@ -321,7 +409,7 @@ void AParkourCharacter::ApplyMantleMotionWarping(FName WarpName, FVector WarpLoc
 void AParkourCharacter::OnMantleMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	// Optionally, clear the delegate if you don't want it to trigger for other montages
-	if (UPAnimInstance* AnimInstance = Cast<UPAnimInstance>(GetMesh()->GetAnimInstance()))
+	if (AnimInstance)
 	{
 		AnimInstance->OnMontageEnded.RemoveDynamic(this, &AParkourCharacter::OnMantleMontageEnded);
 		AnimInstance->OnMontageEnded.Clear();
@@ -339,7 +427,7 @@ void AParkourCharacter::OnVaultMontageEnded(UAnimMontage* Montage, bool bInterru
 {
 	
 	// Optionally, clear the delegate if you don't want it to trigger for other montages
-	if (UPAnimInstance* AnimInstance = Cast<UPAnimInstance>(GetMesh()->GetAnimInstance()))
+	if (AnimInstance)
 	{
 		AnimInstance->OnMontageEnded.RemoveDynamic(this, &AParkourCharacter::OnVaultMontageEnded);
 		AnimInstance->OnMontageEnded.Clear();
@@ -581,7 +669,7 @@ void AParkourCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	{
 
 		//Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AParkourCharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		//Moving
@@ -634,7 +722,6 @@ void AParkourCharacter::SwitchMovementState(EMovementState State)
 
 void AParkourCharacter::ToggleCapsuleSize()
 {
-	UPAnimInstance* AnimInstance = Cast<UPAnimInstance>(GetMesh()->GetAnimInstance());
 	if (AnimInstance->GetCrouching())
 	{
 		GetCapsuleComponent()->SetCapsuleSize(HalfCapsule.X, HalfCapsule.Y);
