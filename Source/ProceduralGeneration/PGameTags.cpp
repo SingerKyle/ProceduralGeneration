@@ -6,3 +6,4 @@
 
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(Mechanics_Slide, "Mechanics.Slide", "slide mechanics tag");
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(Mechanics_Vault, "Mechanics.Vault", "Vault mechanics tag");
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(Mechanics_Wallrun, "Mechanics.Wallrun", "Wallrun mechanics tag");

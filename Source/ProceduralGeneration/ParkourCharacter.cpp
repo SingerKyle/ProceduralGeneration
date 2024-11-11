@@ -234,6 +234,16 @@ void AParkourCharacter::Jump()
 	}
 }
 
+void AParkourCharacter::StartJumpCheck()
+{
+	MechanicComponent->StartMechanic(this, WallRunMechanicTag);
+}
+
+void AParkourCharacter::StopJumpCheck()
+{
+	MechanicComponent->StopMechanic(this, WallRunMechanicTag);
+}
+
 void AParkourCharacter::StartCrouch()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("StartCrouch called"));
@@ -669,8 +679,8 @@ void AParkourCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	{
 
 		//Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AParkourCharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AParkourCharacter::StartJumpCheck);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AParkourCharacter::StopJumpCheck);
 
 		//Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AParkourCharacter::Move);
@@ -714,6 +724,10 @@ void AParkourCharacter::SwitchMovementState(EMovementState State)
 		MovementState = EMovementState::SLIDING;
 		GetCharacterMovement()->MaxWalkSpeed = RunSpeed + 150.f;
 		break;
+	case EMovementState::WALLRUN: // maybe remove
+		MovementState = EMovementState::WALLRUN;
+		GetCharacterMovement()->MaxWalkSpeed = RunSpeed + 150.f;
+		break;
 	default:
 
 		break;
@@ -740,4 +754,10 @@ void AParkourCharacter::ToggleCapsuleSize()
 void AParkourCharacter::SetSprinting()
 {
 	IsSprinting = !IsSprinting;
+}
+
+FVector2D AParkourCharacter::GetPlayerMoveValue() const
+{
+	FInputActionValue Value = GetInputAxisValue(FName("MoveAction"));
+	return Value.Get<FVector2D>();
 }

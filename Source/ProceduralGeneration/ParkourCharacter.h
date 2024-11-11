@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "InputActionValue.h"
 #include "AnimationInstance/PAnimInstance.h"
 #include "GameFramework/Character.h"
 #include "Components/TimelineComponent.h"
@@ -22,7 +23,8 @@ enum EMovementState
 	WALKING UMETA(DisplayName = "Walking"),
 	RUNNING UMETA(DisplayName = "Running"),
 	CROUCHING UMETA(DisplayName = "Crouching"),
-	SLIDING UMETA(DisplayName = "Sliding")
+	SLIDING UMETA(DisplayName = "Sliding"),
+	WALLRUN UMETA(DisplayName = "Sliding")
 };
 
 UCLASS(config = game)
@@ -84,7 +86,8 @@ protected:
 
 	// Action Tags - could make this better
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true")) FGameplayTag SlideMechanicTag;
-
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true")) FGameplayTag WallRunMechanicTag;
+	
 	UPROPERTY(BlueprintReadWrite, Category = "MovementState", meta = (AllowPrivateAccess = "true"))  TEnumAsByte<EMovementState> MovementState;
 
 	// Speed Variables
@@ -126,6 +129,7 @@ public:
 	// Sets default values for this character's properties
 	AParkourCharacter();
 
+	virtual void Jump() override;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -142,8 +146,10 @@ protected:
 
 	void StartSprint();
 	void StopSprint();
-
-	virtual void Jump() override;
+	
+	// Replace normal jump
+	void StartJumpCheck();
+	void StopJumpCheck();
 	
 	void StartCrouch();
 	void StopCrouch();
@@ -188,4 +194,7 @@ public:
 
 	//void SetCrouching();
     void SetSprinting();
+
+	FVector2D GetPlayerMoveValue() const;
+	
 };
