@@ -20,6 +20,7 @@
 #include "DrawDebugHelpers.h"
 #include "MotionWarpingComponent.h"
 #include "EntitySystem/MovieSceneEntitySystemRunner.h"
+#include "PhysicsEngine/PhysicsSpringComponent.h"
 
 // Sets default values
 AParkourCharacter::AParkourCharacter()
@@ -121,7 +122,7 @@ void AParkourCharacter::CheckForFall()
 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Play 0"));
 			if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
 			{
-				DisableInput(PlayerController);
+				DisableInput(PlayerController); // find better way
 			}
 		}
 	}
@@ -139,6 +140,9 @@ void AParkourCharacter::CheckForFall()
 			}
 		}
 	}
+
+	// stop sprinting if we are sprinting
+	IsSprinting = false;
 }
 
 void AParkourCharacter::Landed(const FHitResult& Hit)
@@ -169,7 +173,7 @@ void AParkourCharacter::OnFallMontageEnded(UAnimMontage* Montage, bool bInterrup
 void AParkourCharacter::Move(const FInputActionValue& Value)
 {
 	// input is a Vector2D
-	FVector2D MovementVector = Value.Get<FVector2D>();
+	CurrentMoveVector = Value.Get<FVector2D>();
 
 	if (Controller != nullptr)
 	{
@@ -184,8 +188,24 @@ void AParkourCharacter::Move(const FInputActionValue& Value)
 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
 		// add movement 
-		AddMovementInput(ForwardDirection, MovementVector.Y);
-		AddMovementInput(RightDirection, MovementVector.X);
+		AddMovementInput(ForwardDirection, CurrentMoveVector.Y);
+
+		// Log the tags to the screen (on top of the game view)
+		FString ActiveTagsString = MechanicComponent->GetActiveTags().ToString();
+
+		// Display the active tags on screen for 5 seconds
+		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("Active Tags: %s"), *ActiveTagsString));
+		
+		if (MechanicComponent->GetActiveTags().HasTag(WallRunMechanicTag))
+		{
+			AddMovementInput(GetActorForwardVector(), CurrentMoveVector.X);
+			//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Move with Mesh Forward"));
+		}
+		else
+		{
+			AddMovementInput(RightDirection, CurrentMoveVector.X);
+		}
+		
 	}
 
 	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Movement!"));
@@ -206,13 +226,13 @@ void AParkourCharacter::Look(const FInputActionValue& Value)
 
 void AParkourCharacter::StartSprint()
 {
-	SetSprinting();
+	IsSprinting = true;
 	SwitchMovementState(EMovementState::RUNNING);
 }
 
 void AParkourCharacter::StopSprint()
 {
-	SetSprinting();
+	IsSprinting = false;
 	SwitchMovementState(EMovementState::WALKING);
 }
 
@@ -232,6 +252,17 @@ void AParkourCharacter::Jump()
 			Super::Jump();
 		}
 	}
+}
+
+FRotator AParkourCharacter::GetInputDirection()
+{
+	FVector MoveVector = FVector(GetPlayerMoveValue().X, GetPlayerMoveValue().Y, 0);
+	FRotator MoveRotation = FRotator(0, MoveVector.Rotation().Yaw,0);
+
+	FRotator DeltaRotation = MoveRotation - GetControlRotation();
+	DeltaRotation += FRotator(90, 90, 90);
+
+	return FRotator(0,DeltaRotation.Yaw,0);
 }
 
 void AParkourCharacter::StartJumpCheck()
@@ -306,7 +337,7 @@ void AParkourCharacter::Interact()
 			
 			if (AnimInstance && VaultMontages.Num() > 0) // Ensure the anim instance and montage are valid
 				{
-				//Camera->bUsePawnControlRotation = false;
+				//TFPSCamera->bUsePawnControlRotation = false;
 				
 				AnimInstance->OnMontageEnded.AddDynamic(this, &AParkourCharacter::OnVaultMontageEnded);
 				
@@ -330,7 +361,7 @@ void AParkourCharacter::Interact()
 				
 				if (AnimInstance && MantleMontage) // Ensure the anim instance and montage are valid
 					{
-				
+					TFPSCamera->bUsePawnControlRotation = false;
 					AnimInstance->OnMontageEnded.AddDynamic(this, &AParkourCharacter::OnMantleMontageEnded);
 				
 					AnimInstance->Montage_Play(MantleMontage); // Play the montage
@@ -359,7 +390,7 @@ void AParkourCharacter::Interact()
 			
 			if (AnimInstance && MantleMontage) // Ensure the anim instance and montage are valid
 				{
-				
+				TFPSCamera->bUsePawnControlRotation = false;
 				AnimInstance->OnMontageEnded.AddDynamic(this, &AParkourCharacter::OnMantleMontageEnded);
 				
 				AnimInstance->Montage_Play(MantleMontage); // Play the montage
@@ -427,6 +458,8 @@ void AParkourCharacter::OnMantleMontageEnded(UAnimMontage* Montage, bool bInterr
 
 	SetActorEnableCollision(true);
 	bIsPerformingAction = false;
+
+	TFPSCamera->bUsePawnControlRotation = true;
 
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Mantle Montage Ended, Movement Mode Set to Walking"));
 
@@ -679,7 +712,7 @@ void AParkourCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	{
 
 		//Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AParkourCharacter::StartJumpCheck);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AParkourCharacter::StartJumpCheck);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AParkourCharacter::StopJumpCheck);
 
 		//Moving
@@ -751,13 +784,7 @@ void AParkourCharacter::ToggleCapsuleSize()
 	IsCrouching = !IsCrouching;
 }*/
 
-void AParkourCharacter::SetSprinting()
-{
-	IsSprinting = !IsSprinting;
-}
-
 FVector2D AParkourCharacter::GetPlayerMoveValue() const
 {
-	FInputActionValue Value = GetInputAxisValue(FName("MoveAction"));
-	return Value.Get<FVector2D>();
+	return CurrentMoveVector;
 }

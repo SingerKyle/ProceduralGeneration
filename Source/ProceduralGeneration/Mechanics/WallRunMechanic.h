@@ -37,6 +37,8 @@ public:
 	
 	void BeginWallrun();
 	bool ContinueWallRun();
+	void SetWallRunRotation();
+	void SetWallRunOptions(float GravityScale, bool PlaneConstraintVal, FVector PlaneConstraintNormal, bool OrientToMovement, bool Wallrunning, float CapsuleRadius, bool UsePawnRotation);
 	void EndWallrun();
 
 	// Timeline Update Function
@@ -44,6 +46,9 @@ public:
 	UFUNCTION() void TimelineArcComplete(float Value);
 	// Gravity
 	void GravityUpdate(float Value);
+
+	// Forward Trace
+	UFUNCTION() void ShouldForwardTrace();
 
 protected:
 	
@@ -62,11 +67,24 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WallRun Options") bool bIsWallRunning;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WallRun Options") bool bApplyGravity;
 
+	UPROPERTY() FVector WallRunNormal;
+	bool bCanWallRun = true;
+
+	// Variables for wall run speed, angles, forces (maybe move to custom character component
+	UPROPERTY(EditDefaultsOnly) float MinWallRunSpeed;
+	UPROPERTY(EditDefaultsOnly) float MaxWallRunSpeed;
+	UPROPERTY(EditDefaultsOnly) float WallJumpOffForce = 350.f;
+
+	// Normal of whichever wall we are running along
+	FVector WallSurfaceNormal;
+	
 	// Animations for right wall run
 	UPROPERTY(EditAnywhere, Category = "Animation") UAnimMontage* RightWallMontage;
 	
 	// Forward Trace
 	bool bForwardTrace;
+	// Timer for forward trace bool
+	UPROPERTY() FTimerHandle ForwardTraceDelay;
 
 	// Hand IK positions
 	FVector WallRunHandIK_Location;

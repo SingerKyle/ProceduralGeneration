@@ -23,7 +23,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Mechanics") bool CanStartMechanic(AActor* Actor);
 
 	UFUNCTION(BlueprintCallable, Category = "Mechanics") bool GetIsRunning() const;
-
+	
 	// Check if this mechanic can be started
 	UFUNCTION(BlueprintNativeEvent, Category = "Mechanics")
 	bool CanStart(AActor* Actor);

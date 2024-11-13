@@ -125,11 +125,16 @@ protected:
 	// FALL DAMAGE AND LANDING
 	UPAnimInstance* AnimInstance;
 	UPROPERTY(EditAnywhere, Category = "Mantling", meta = (AllowPrivateAccess = "true")) TArray<UAnimMontage*> FallMontages;
+
+	// Wall Running - GetMovement Vals
+	FVector2d CurrentMoveVector;
 public:
 	// Sets default values for this character's properties
 	AParkourCharacter();
 
 	virtual void Jump() override;
+
+	FRotator GetInputDirection();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

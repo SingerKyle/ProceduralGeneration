@@ -29,11 +29,11 @@ bool UBaseMechanic::CanStart_Implementation(AActor* Actor)
 
 	if (OwnerComponent->GetActiveTags().HasAnyExact(BlockedTags))
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Canstart is false"));
+		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Canstart is false"));
 		return false;
 	}
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Canstart is true"));
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Canstart is true"));
 	return true;
 }
 
@@ -68,7 +68,7 @@ void UBaseMechanic::StartMechanic_Implementation(AActor* Actor)
 
 	
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("BaseMechanic StartMechanic Function"));
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("BaseMechanic StartMechanic Function"));
 }
 
 void UBaseMechanic::StopMechanic_Implementation(AActor* Actor)

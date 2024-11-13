@@ -97,7 +97,7 @@ void UMechanicsComponent::RemoveMechanic(UBaseMechanic* MechanicToRemove)
 
 bool UMechanicsComponent::StartMechanic(AActor* Actor, FGameplayTag MechanicTag)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Entering StartMechanic Function"));
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Entering StartMechanic Function"));
 
 	if (GetActiveTags().HasAnyExact(GetBlockedTags()))
 	{
