@@ -20,6 +20,7 @@
 #include "DrawDebugHelpers.h"
 #include "MotionWarpingComponent.h"
 #include "EntitySystem/MovieSceneEntitySystemRunner.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "PhysicsEngine/PhysicsSpringComponent.h"
 
 // Sets default values
@@ -49,8 +50,11 @@ AParkourCharacter::AParkourCharacter()
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 
+	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring Arm"));
+	SpringArm->SetupAttachment(GetMesh(), "head");
+	
 	TFPSCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FPSCamera"));
-	TFPSCamera->SetupAttachment(GetMesh(), "head");
+	TFPSCamera->SetupAttachment(SpringArm);
 	TFPSCamera->SetRelativeLocation(FVector(0.0f, 10.0f, 0.0f));
 	TFPSCamera->SetRelativeRotation(FRotator(0.0f, 90.0f, -90.0f));
 	TFPSCamera->bUsePawnControlRotation = true;
@@ -66,7 +70,7 @@ AParkourCharacter::AParkourCharacter()
 	InitialTraceLength = 380.f;
 	SecondaryTraceZOffset = 100.f;
 	SecondaryTraceGap = 20.f;
-	LandingPositionForwardOffset = 100.f;
+	LandingPositionForwardOffset = 10.f;
 
 	// MANTLE
 	MantleInitialTraceLength = 120.f;
@@ -96,6 +100,7 @@ void AParkourCharacter::BeginPlay()
 		//timelineProgress.BindUFunction(this, FName("CrouchTimer"));
 		CrouchTimeline.AddInterpFloat(CrouchCurveFloat, timelineProgress);
 	}
+	
 }
 
 void AParkourCharacter::CheckForFall()
@@ -199,11 +204,11 @@ void AParkourCharacter::Move(const FInputActionValue& Value)
 		if (MechanicComponent->GetActiveTags().HasTag(WallRunMechanicTag))
 		{
 			AddMovementInput(GetActorForwardVector(), CurrentMoveVector.X);
-			//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Move with Mesh Forward"));
 		}
 		else
 		{
 			AddMovementInput(RightDirection, CurrentMoveVector.X);
+			//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Move with Mesh Forward"));
 		}
 		
 	}
@@ -483,6 +488,9 @@ void AParkourCharacter::OnVaultMontageEnded(UAnimMontage* Montage, bool bInterru
 	
 	// Reset movement mode back to walking
 	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	// Reset root motion mode to default
+	AnimInstance->SetRootMotionMode(ERootMotionMode::RootMotionFromMontagesOnly);
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Root Motion Mode: %d"), AnimInstance->RootMotionMode.GetValue()));
 	//GetCharacterMovement()->Velocity = FVector::ZeroVector;
 	//SetActorLocation(VaultLand);
 }

@@ -36,6 +36,8 @@ protected:
 	// True First Person Camera - Can See Third Person Mesh
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Camera, meta = (AllowPrivateAccess = true)) UCameraComponent* TFPSCamera;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Camera, meta = (AllowPrivateAccess = true)) USpringArmComponent* SpringArm;
+
 	// MappingContext
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputMappingContext* DefaultMappingContext;
