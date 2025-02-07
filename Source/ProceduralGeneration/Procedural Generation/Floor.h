@@ -14,8 +14,10 @@ class Floor
 {
 public:
 	Floor();
-	Floor(FVector Origin, FVector2D, float, float, FVector2D);
+	Floor(FVector Origin, FVector2D, float, float, FVector2D, bool);
 	~Floor();
+
+	void Reinitialise(FVector Origin, FVector2D, float, float, FVector2D, bool);
 
 	void Partition();
 	int32 SelectOrientation();
@@ -27,8 +29,11 @@ public:
 	FORCEINLINE TArray<TSharedPtr<FloorNode>> GetPartitionedFloor() const {	return PartitionedFloor; }
 	FORCEINLINE void ClearPartitionedFloor() { PartitionedFloor.Empty(); }
 
+	bool IsPartitionValid(TSharedPtr<FloorNode> Node);
+	
 	void DrawFloorNodes(class UWorld* World);
 	void DrawFloorNode(UWorld* World, FCornerCoordinates Coordinates);
+
 private:
 	TArray<TSharedPtr<FloorNode>> FloorNodeStack;
 	TArray<TSharedPtr<FloorNode>> PartitionedFloor;
@@ -39,9 +44,14 @@ private:
 	int32 RoomMinX;
 	int32 RoomMinY;
 
+	int32 RoomMaxX;
+	int32 RoomMaxY;
+
 	float GridLength;
 
 	float SplitRate;
 	
 	FVector Origin;
+
+	bool bShouldCheckMax;
 };

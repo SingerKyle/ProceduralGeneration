@@ -8,7 +8,7 @@ Floor::Floor()
 	
 }
 
-Floor::Floor(FVector Origin_, FVector2D GridSize, float FloorSize, float Split, FVector2D MinBounds)
+Floor::Floor(FVector Origin_, FVector2D GridSize, float FloorSize, float Split, FVector2D MinBounds, bool bUseMaxSize)
 {
 	Origin = Origin_;
 	
@@ -18,14 +18,39 @@ Floor::Floor(FVector Origin_, FVector2D GridSize, float FloorSize, float Split, 
 	RoomMinX = MinBounds.X;
 	RoomMinY = MinBounds.Y;
 
+	RoomMaxX = GridSize.X - MinBounds.X;
+	RoomMaxY = GridSize.Y - MinBounds.Y;
+
 	GridLength = FloorSize;
 
 	SplitRate = Split;
+
+	bShouldCheckMax = bUseMaxSize;
 }
 
 Floor::~Floor()
 {
 	
+}
+
+void Floor::Reinitialise(FVector Origin_, FVector2D GridSize, float FloorSize, float Split, FVector2D MinBounds, bool bUseMaxSize)
+{
+	Origin = Origin_;
+	
+	FloorGridSizeX = GridSize.X;
+	FloorGridSizeY = GridSize.Y;
+
+	RoomMinX = MinBounds.X;
+	RoomMinY = MinBounds.Y;
+
+	RoomMaxX = GridSize.X - MinBounds.X;
+	RoomMaxY = GridSize.Y - MinBounds.Y;
+
+	GridLength = FloorSize;
+
+	SplitRate = Split;
+
+	bShouldCheckMax = bUseMaxSize;
 }
 
 void Floor::Partition()
@@ -38,18 +63,37 @@ void Floor::Partition()
 	while (FloorNodeStack.Num() > 0)
 	{
 		TSharedPtr<FloorNode> A = FloorNodeStack.Pop();
-		UE_LOG(LogTemp, Warning, TEXT("Pop FloorNode Off Stack"));
+		//UE_LOG(LogTemp, Warning, TEXT("Pop FloorNode Off Stack"));
 
 		bool bNodeWasSplit = SplitAttempt(A);
 
 		if(!bNodeWasSplit) // if shouldn't be split - push to partitioned floor stack
 		{
+			if (bShouldCheckMax)
+			{
+				int Width = A->GetCornerCoordinates().LowerRightX - A->GetCornerCoordinates().UpperLeftX;
+				int Height = A->GetCornerCoordinates().LowerRightY - A->GetCornerCoordinates().UpperLeftY;
+
+				if (Width > RoomMaxX || Height > RoomMaxY)
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Too Big"));
+					FloorNodeStack.Push(A); // Push back to be split again
+					continue;
+				}
+			}
+
+			if (!IsPartitionValid(A))
+			{
+				FloorNodeStack.Push(A);
+				continue;
+			}
+			
 			PartitionedFloor.Push(A);
-			UE_LOG(LogTemp, Warning, TEXT("Push FloorNode to Partition Stack"));
+			//UE_LOG(LogTemp, Warning, TEXT("Push FloorNode to Partition Stack"));
 		}
 		
-		UE_LOG(LogTemp, Warning, TEXT("Nodes in Existance in loop: %d"), FloorNode::GetNodeCount());
-		UE_LOG(LogTemp, Warning, TEXT("Nodes in Existance in Stack: %d"), FloorNodeStack.Num());
+		//UE_LOG(LogTemp, Warning, TEXT("Nodes in Existance in loop: %d"), FloorNode::GetNodeCount());
+		//UE_LOG(LogTemp, Warning, TEXT("Nodes in Existance in Stack: %d"), FloorNodeStack.Num());
 	}
 }
 
@@ -202,6 +246,17 @@ void Floor::SplitVertical(TSharedPtr<FloorNode> InA, TSharedPtr<FloorNode> InB, 
 
 	InC->SetCornerCoordinates(CornerCoordinatesC);
 	FloorNodeStack.Push(InC);
+}
+
+bool Floor::IsPartitionValid(TSharedPtr<FloorNode> Node)
+{
+	FCornerCoordinates Coordinates = Node->GetCornerCoordinates();
+
+	int32 Width = Coordinates.LowerRightX - Coordinates.UpperLeftX;
+	int32 Height = Coordinates.LowerRightY - Coordinates.UpperLeftY;
+
+	// Check against maximum bounds
+	return (Width <= RoomMaxX && Height <= RoomMaxY);
 }
 
 void Floor::DrawFloorNodes(UWorld* World)

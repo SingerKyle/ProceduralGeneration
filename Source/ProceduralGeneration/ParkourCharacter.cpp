@@ -73,7 +73,7 @@ AParkourCharacter::AParkourCharacter()
 	LandingPositionForwardOffset = 10.f;
 
 	// MANTLE
-	MantleInitialTraceLength = 120.f;
+	MantleInitialTraceLength = 200.f;
 	MantleSecondaryTraceZOffset = 200.f;
 	MantleFallHeightMultiplier = 0.5;
 }
