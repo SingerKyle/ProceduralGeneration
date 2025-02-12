@@ -5,7 +5,7 @@ int32 FloorNode::NodeCount = 0;
 FloorNode::FloorNode()
 {
 	++NodeCount;
-	UE_LOG(LogTemp, Warning, TEXT("Create Floor Node"))
+	UE_LOG(LogTemp, Warning, TEXT("Create Floor Node"));
 }
 
 FloorNode::FloorNode(const FCornerCoordinates& Coordinates)
@@ -15,11 +15,11 @@ FloorNode::FloorNode(const FCornerCoordinates& Coordinates)
 	CornerCoordinates.LowerRightX = Coordinates.LowerRightX;
 	CornerCoordinates.LowerRightY = Coordinates.LowerRightY;
 
-	UE_LOG(LogTemp, Warning, TEXT("Create Floor Node"))
+	UE_LOG(LogTemp, Warning, TEXT("Create Floor Node"));
 }
 
 FloorNode::~FloorNode()
 {
 	--NodeCount;
-	UE_LOG(LogTemp, Warning, TEXT("Destroy Floor Node"))
+	UE_LOG(LogTemp, Warning, TEXT("Destroy Floor Node"));
 }

@@ -54,6 +54,11 @@ void ALevelGenerator::InitialiseGrid()
 	
 		SpawnedActors.Empty();
 	}
+	
+	if(!PlacedPlatforms.IsEmpty())
+	{
+		PlacedPlatforms.Empty();
+	}
 
 	if(Level.IsValid())
 	{
@@ -91,184 +96,116 @@ void ALevelGenerator::Tick(float DeltaTime)
 
 void ALevelGenerator::SpawnGrid()
 {
-	if (!GetWorld()) return;
+    if (!GetWorld() || Level->GetPartitionedFloor().Num() == 0) return;
 
-    TArray<FVector> PlatformCenters;
-    TArray<float> PlatformHeights;
-
-	TArray<FPlatformData> PlacedPlatforms;  // Store already placed platforms
+    //TArray<FPlatformData> PlacedPlatforms;
+	
+    //const float MinPlatformDistance = SpawnParams.FloorTileSize * 0.5f;
     
-    for (const auto& Floor : Level->GetPartitionedFloor())
-        {
-            FCornerCoordinates Coords = Floor->GetCornerCoordinates();
-            
-            float RoofHeight = FMath::RandRange(SpawnParams.baseHeight.X, SpawnParams.baseHeight.Y);
-
-
-
-    	// Calculate platform dimensions
-    	float Width = (Coords.LowerRightX - Coords.UpperLeftX) * SpawnParams.FloorTileSize;
-    	float Length = (Coords.LowerRightY - Coords.UpperLeftY) * SpawnParams.FloorTileSize;
-        
-    	// Try to find a valid position
-    	FVector ValidPosition = FindValidPlatformPosition(
-			Coords, 
-			Width, 
-			Length, 
-			RoofHeight, 
-			PlacedPlatforms
-		);
-
-
-    	
-
-
-    	
-            // Calculate platform position with offset
-            FVector PlatformCenter = CalculatePlatformPosition(Coords, RoofHeight);
-            
-            // Store platform data
-            PlatformCenters.Add(PlatformCenter);
-            PlatformHeights.Add(RoofHeight);
-
-    		FVector Position;
-    	
-    		if(bool CoinFlip = FMath::RandBool())
-    		{
-    			// Add random offset within reasonable bounds
-    			float RandomOffsetX = FMath::RandRange(-Width * 1.2f, Width * 1.2f);
-    			
-    			Position = FVector(Coords.UpperLeftX * SpawnParams.FloorTileSize + Width / 2 + RandomOffsetX, Coords.UpperLeftY * SpawnParams.FloorTileSize + Length / 2, RoofHeight);
-    		}
-		    else
-		    {
-		    	float RandomOffsetY = FMath::RandRange(-Length * 1.2f, Length * 1.2f);
-		    	
-		    	Position = FVector( Coords.UpperLeftX * SpawnParams.FloorTileSize + Width / 2, Coords.UpperLeftY * SpawnParams.FloorTileSize + Length / 2 + RandomOffsetY,RoofHeight);
-		    }
-    	
-            
-            
-            
-
-            FRotator Rotation(180, 0, 0);
-
-            // Spawn the roof actor
-            FActorSpawnParameters ActorParams;
-            ActorParams.Owner = GetOwner();
-            
-            AStaticMeshActor* RoofActor = GetWorld()->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), Position, Rotation, ActorParams);
-
-            if (RoofActor)
-            {
-                UStaticMesh* SelectedMesh = SpawnMeshes.Mesh;
-                
-                if (SelectedMesh)
-                {
-                    UStaticMeshComponent* MeshComp = RoofActor->GetStaticMeshComponent();
-                    MeshComp->SetMobility(EComponentMobility::Movable);
-                    MeshComp->SetStaticMesh(SelectedMesh);
-                    MeshComp->SetWorldScale3D(FVector(Width / 100.0f, Length / 100.0f, 50.0f));
-                    SpawnedActors.Add(RoofActor);
-
-                	// Store the platform data
-                	FPlatformData NewPlatform;
-                	NewPlatform.Position = ValidPosition;
-                	NewPlatform.Width = Width;
-                	NewPlatform.Length = Length;
-                	PlacedPlatforms.Add(NewPlatform);
-                }
-            }
-        }
-}
-
-FVector ALevelGenerator::CalculatePlatformPosition(const FCornerCoordinates& Coords, float Height) const
-{
-	// Calculate grid dimensions
-	int32 GridWidth = Coords.LowerRightX - Coords.UpperLeftX;
-	int32 GridHeight = Coords.LowerRightY - Coords.UpperLeftY;
-    
-	// Add randomization to platform positioning within the grid cell
-	float RandomOffsetX = FMath::RandRange(-GridWidth * 0.25f, GridWidth * 0.25f) * SpawnParams.FloorTileSize;
-	float RandomOffsetY = FMath::RandRange(-GridHeight * 0.25f, GridHeight * 0.25f) * SpawnParams.FloorTileSize;
-    
-	// Calculate center position with random offset
-	return FVector(
-		(Coords.UpperLeftX + (GridWidth/2.0f)) * SpawnParams.FloorTileSize + RandomOffsetX,
-		(Coords.UpperLeftY + (GridHeight/2.0f)) * SpawnParams.FloorTileSize + RandomOffsetY,
-		Height
-	);
-}
-
-FVector ALevelGenerator::FindValidPlatformPosition(const FCornerCoordinates& Coords, float Width, float Length, float Height, const TArray<FPlatformData>& PlacedPlatforms)
-{
-    const int32 MaxAttempts = 10;
-    const float MinimumSpacing = 50.0f; // Ensure spacing between platforms
-
-    for (int32 Attempt = 0; Attempt < MaxAttempts; Attempt++)
+    // Shuffle the floor nodes for random placement order
+    TArray<TSharedPtr<FloorNode>> ShuffledFloors = Level->GetPartitionedFloor();
+    for (int32 i = ShuffledFloors.Num() - 1; i > 0; --i)
     {
-        float RandomOffsetX = FMath::RandRange(-Width * 1.35f, Width * 1.35f);
-        float RandomOffsetY = FMath::RandRange(-Length * 1.35f, Length * 1.35f);
+        int32 SwapIndex = FMath::RandRange(0, i);
+        ShuffledFloors.Swap(i, SwapIndex);
+    }
 
-        FVector TestPosition(
-            Coords.UpperLeftX * SpawnParams.FloorTileSize + Width / 2 + RandomOffsetX,
-            Coords.UpperLeftY * SpawnParams.FloorTileSize + Length / 2 + RandomOffsetY,
-            Height
-        );
+    // Try to place each platform
+    for (const auto& Floor : ShuffledFloors)
+    {
+        FCornerCoordinates Coords = Floor->GetCornerCoordinates();
+        
+        // Calculate random platform dimensions (in grid units)
+        int32 GridWidth = FMath::RandRange(1, FMath::Min(99, Coords.LowerRightX - Coords.UpperLeftX));
+        int32 GridLength = FMath::RandRange(1, FMath::Min(99, Coords.LowerRightY - Coords.UpperLeftY));
+        
+        // Convert to world units
+        float Width = GridWidth * SpawnParams.FloorTileSize;
+        float Length = GridLength * SpawnParams.FloorTileSize;
+        float Height = FMath::RandRange(SpawnParams.baseHeight.X, SpawnParams.baseHeight.Y);
 
-        FVector AdjustedPosition = TestPosition;
-        bool NeedsAdjustment = false;
+        // Try multiple positions for each platform
+        const int32 MaxAttempts = 15;
+        bool ValidPositionFound = false;
 
-        for (const FPlatformData& PlacedPlatform : PlacedPlatforms)
+        for (int32 Attempt = 0; Attempt < MaxAttempts && !ValidPositionFound; ++Attempt)
         {
-            float XDistance = FMath::Abs(TestPosition.X - PlacedPlatform.Position.X);
-            float YDistance = FMath::Abs(TestPosition.Y - PlacedPlatform.Position.Y);
+            FVector ProposedPosition = CalculatePlatformPosition(Coords, Height, GridWidth, GridLength);
+            
+            // Create platform data for validation
+            FPlatformData NewPlatform(ProposedPosition, FVector(Width, Length, 50.0f));
 
-            float RequiredXDistance = (Width + PlacedPlatform.Width) / 2 + MinimumSpacing;
-            float RequiredYDistance = (Length + PlacedPlatform.Length) / 2 + MinimumSpacing;
-
-            if (XDistance < RequiredXDistance && YDistance < RequiredYDistance)
+            // Check if position is valid
+            bool IsValidPosition = NewPlatform.IsWithinGrid(
+                FVector2D(SpawnParams.MapDimensions.X * SpawnParams.FloorTileSize, SpawnParams.MapDimensions.Y * SpawnParams.FloorTileSize),
+                SpawnParams.FloorTileSize
+            );
+            
+            if (IsValidPosition)
             {
-                NeedsAdjustment = true;
-
-                // Push out fully in both X and Y directions
-                if (XDistance < RequiredXDistance)
+                for (const FPlatformData& ExistingPlatform : PlacedPlatforms)
                 {
-                    if (TestPosition.X > PlacedPlatform.Position.X)
-                        AdjustedPosition.X = PlacedPlatform.Position.X + (PlacedPlatform.Width / 2) + (Width / 2) + MinimumSpacing;
-                    else
-                        AdjustedPosition.X = PlacedPlatform.Position.X - (PlacedPlatform.Width / 2) - (Width / 2) - MinimumSpacing;
-                }
-
-                if (YDistance < RequiredYDistance)
-                {
-                    if (TestPosition.Y > PlacedPlatform.Position.Y)
-                        AdjustedPosition.Y = PlacedPlatform.Position.Y + (PlacedPlatform.Length / 2) + (Length / 2) + MinimumSpacing;
-                    else
-                        AdjustedPosition.Y = PlacedPlatform.Position.Y - (PlacedPlatform.Length / 2) - (Length / 2) - MinimumSpacing;
+                    if (NewPlatform.OverlapsWith(ExistingPlatform, SpawnParams.MinJumpDistance))
+                    {
+                        IsValidPosition = false;
+                        break;
+                    }
                 }
             }
-        }
 
-        if (!NeedsAdjustment)
-        {
-            return TestPosition; // Valid position found
-        }
-        else
-        {
-            return AdjustedPosition; // Return fully adjusted position
+            if (IsValidPosition)
+            {
+                // Spawn the platform
+                FRotator Rotation(180, 0, 0);
+                AStaticMeshActor* PlatformActor = GetWorld()->SpawnActor<AStaticMeshActor>(
+                    AStaticMeshActor::StaticClass(), 
+                    ProposedPosition, 
+                    Rotation
+                );
+
+                if (PlatformActor && SpawnMeshes.Mesh)
+                {
+                    UStaticMeshComponent* MeshComp = PlatformActor->GetStaticMeshComponent();
+                    MeshComp->SetMobility(EComponentMobility::Movable);
+                    MeshComp->SetStaticMesh(SpawnMeshes.Mesh);
+                    MeshComp->SetWorldScale3D(FVector(Width / 100.0f, Length / 100.0f, 50.0f));
+
+                	SpawnedActors.Add(PlatformActor);
+                    PlacedPlatforms.Add(NewPlatform);
+                    ValidPositionFound = true;
+                }
+            }
         }
     }
 
-    UE_LOG(LogTemp, Warning, TEXT("No valid position found after max attempts!"));
+	PlaceMantleObjects();
+}
 
+FVector ALevelGenerator::CalculatePlatformPosition(const FCornerCoordinates& Coords, float Height, int32 PlatformWidth, int32 PlatformLength) const
+{
+    // Calculate available space in the grid cell
+    int32 GridWidth = Coords.LowerRightX - Coords.UpperLeftX;
+    int32 GridHeight = Coords.LowerRightY - Coords.UpperLeftY;
+    
+    // Calculate maximum allowed offset based on platform size
+    float MaxOffsetX = (GridWidth - PlatformWidth) * 0.5f * SpawnParams.FloorTileSize;
+    float MaxOffsetY = (GridHeight - PlatformLength) * 0.5f * SpawnParams.FloorTileSize;
+    
+    // Add randomization within the available space
+    float RandomOffsetX = FMath::RandRange(-MaxOffsetX, MaxOffsetX);
+    float RandomOffsetY = FMath::RandRange(-MaxOffsetY, MaxOffsetY);
+    
     return FVector(
-        Coords.UpperLeftX * SpawnParams.FloorTileSize + Width / 2,
-        Coords.UpperLeftY * SpawnParams.FloorTileSize + Length / 2,
+        (Coords.UpperLeftX + (GridWidth/2.0f)) * SpawnParams.FloorTileSize + RandomOffsetX,
+        (Coords.UpperLeftY + (GridHeight/2.0f)) * SpawnParams.FloorTileSize + RandomOffsetY,
         Height
     );
 }
 
+void ALevelGenerator::PlaceMantleObjects()
+{
+    
+}
 
 
 /*void ALevelGenerator::SpawnGrid()

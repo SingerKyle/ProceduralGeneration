@@ -8,27 +8,55 @@
 #include "Components/ActorComponent.h"
 #include "LevelGenerator.generated.h"
 
-UENUM(BlueprintType)
-enum class EPlatformConnectionType : uint8
-{
-	// Platforms right next to each other
-	Direct,      
-	// Platforms at jump distance
-	Jump,        
-	// Platforms at an angle for wall running
-	WallRun,     
-	// Platforms with climb obstacles
-	Mantle       
-};
-
+USTRUCT(BlueprintType)
 struct FPlatformData
 {
+	GENERATED_BODY()
+	
 	FVector Position;
+	FVector Dimensions;
+	FBox2D Bounds; // Store the 2D bounds of the platform for easier overlap checking
+
+	FPlatformData(): Position(FVector::ZeroVector), Dimensions(FVector::ZeroVector), Bounds(FVector2D::ZeroVector, FVector2D::ZeroVector)
+	{}
 	
-	float Width;
-	
-	float Length;
-	
+	FPlatformData(const FVector& InPosition, const FVector& InDimensions)
+		: Position(InPosition)
+		, Dimensions(InDimensions)
+	{
+		// Calculate the 2D bounds of the platform
+		FVector2D Center(Position.X, Position.Y);
+		FVector2D Extents(Dimensions.X * 0.5f, Dimensions.Y * 0.5f);
+		Bounds = FBox2D(Center - Extents, Center + Extents);
+	}
+    
+	bool OverlapsWith(const FPlatformData& Other, float MinDistance) const
+	{
+		// First check if the expanded bounds overlap
+		FBox2D ExpandedBounds = Bounds;
+		ExpandedBounds.Min -= FVector2D(MinDistance, MinDistance);
+		ExpandedBounds.Max += FVector2D(MinDistance, MinDistance);
+        
+		if (!ExpandedBounds.IsInside(Other.Bounds))
+			return false;
+            
+		// Check vertical overlap
+		float ZDist = FMath::Abs(Position.Z - Other.Position.Z);
+		float ZOverlap = (Dimensions.Z + Other.Dimensions.Z) * 0.5f;
+        
+		return ZDist < ZOverlap;
+	}
+    
+	bool IsWithinGrid(const FVector2D& GridSize, float TileSize) const
+	{
+		// Check if the platform (including its full dimensions) stays within the grid
+		FVector2D MinPoint(Position.X - Dimensions.X * 0.5f, Position.Y - Dimensions.Y * 0.5f);
+		FVector2D MaxPoint(Position.X + Dimensions.X * 0.5f, Position.Y + Dimensions.Y * 0.5f);
+        
+		return MinPoint.X >= 0 && MinPoint.Y >= 0 && 
+			   MaxPoint.X <= GridSize.X * TileSize && 
+			   MaxPoint.Y <= GridSize.Y * TileSize;
+	}
 };
 
 USTRUCT(BlueprintType)
@@ -36,7 +64,7 @@ struct FProceduralGenerationParams
 {
 	GENERATED_BODY()
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Generator", meta = (AllowPrivateAccess = true)) FVector2D MapDimensions;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Generator", meta = (AllowPrivateAccess = true)) FVector2D MapDimensions = FVector2D(5.f,5.f);
 
 	UPROPERTY(EditAnywhere, Category = "Level Generator") float FloorTileSize = 1000.0f;
 
@@ -56,7 +84,7 @@ struct FProceduralGenerationParams
 	UPROPERTY(EditAnywhere, meta=(ClampMin=0,ClampMax=50, UIMin=0,UIMax=50), Category = "Level Generator") FVector2D MaxBounds = FVector2D(5,5);;
 
 	// Minimum and Maximum Spawn Height
-	UPROPERTY(EditAnywhere, Category = "Level Generator") FVector2f baseHeight = FVector2f(-500.f,500.f);   // Minimum building heigh
+	UPROPERTY(EditAnywhere, Category = "Level Generator") FVector2f baseHeight = FVector2f(-500.f,500.f);  
 };
 
 USTRUCT(BlueprintType)
@@ -92,7 +120,7 @@ public:
 	
 	// Called every frame
 	virtual void Tick( float DeltaSeconds ) override;
-
+	
 	void DrawDebugLines();
 
 	/*
@@ -103,22 +131,20 @@ public:
 	
 	void SpawnGrid();
 
-	FVector CalculatePlatformPosition(const FCornerCoordinates& Coords, float Height) const;
+	FVector CalculatePlatformPosition(const FCornerCoordinates& Coords, float Height, int32 PlatformWidth, int32 PlatformLength) const;
 
-	FVector FindValidPlatformPosition(const FCornerCoordinates& Coords, float Width, float Length, float Height, const TArray<FPlatformData>& PlacedPlatforms);
-	
+	void PlaceMantleObjects();
+
 private:
-	
-	//UPROPERTY(EditAnywhere, Category = "Level Generator")
-	//TSubclassOf<AActor> FloorBPClass;
 
 	TSharedPtr<Floor> Level;
-	TArray<AActor*> SpawnedActors;
+	UPROPERTY() TArray<AActor*> SpawnedActors;
 
 	TMap<int32, TArray<AActor*>> PartitionedFloorActors;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Generator") FProceduralGenerationParams SpawnParams;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Generator") FProceduralGenerationMeshes SpawnMeshes;
+	UPROPERTY() TArray<FPlatformData> PlacedPlatforms;
 	
 };
