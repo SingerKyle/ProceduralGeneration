@@ -15,7 +15,8 @@ struct FPlatformData
 	
 	FVector Position;
 	FVector Dimensions;
-	FBox2D Bounds; // Store the 2D bounds of the platform for easier overlap checking
+	// Store the 2D bounds of the platform for easier overlap checking
+	FBox2D Bounds; 
 
 	FPlatformData(): Position(FVector::ZeroVector), Dimensions(FVector::ZeroVector), Bounds(FVector2D::ZeroVector, FVector2D::ZeroVector)
 	{}
@@ -32,19 +33,25 @@ struct FPlatformData
     
 	bool OverlapsWith(const FPlatformData& Other, float MinDistance) const
 	{
-		// First check if the expanded bounds overlap
-		FBox2D ExpandedBounds = Bounds;
-		ExpandedBounds.Min -= FVector2D(MinDistance, MinDistance);
-		ExpandedBounds.Max += FVector2D(MinDistance, MinDistance);
-        
-		if (!ExpandedBounds.IsInside(Other.Bounds))
-			return false;
-            
-		// Check vertical overlap
+		// Get the actual corners of both platforms
+		FVector2D ThisMin = FVector2D(Position.X - Dimensions.X * 0.5f, Position.Y - Dimensions.Y * 0.5f);
+		FVector2D ThisMax = FVector2D(Position.X + Dimensions.X * 0.5f, Position.Y + Dimensions.Y * 0.5f);
+		FVector2D OtherMin = FVector2D(Other.Position.X - Other.Dimensions.X * 0.5f, Other.Position.Y - Other.Dimensions.Y * 0.5f);
+		FVector2D OtherMax = FVector2D(Other.Position.X + Other.Dimensions.X * 0.5f, Other.Position.Y + Other.Dimensions.Y * 0.5f);
+
+		// Add the minimum distance buffer
+		ThisMin -= FVector2D(MinDistance);
+		ThisMax += FVector2D(MinDistance);
+
+		// Check for overlap on both axes
+		bool XOverlap = (ThisMin.X <= OtherMax.X) && (ThisMax.X >= OtherMin.X);
+		bool YOverlap = (ThisMin.Y <= OtherMax.Y) && (ThisMax.Y >= OtherMin.Y);
+
+		// Check vertical overlap separately
 		float ZDist = FMath::Abs(Position.Z - Other.Position.Z);
-		float ZOverlap = (Dimensions.Z + Other.Dimensions.Z) * 0.5f;
-        
-		return ZDist < ZOverlap;
+		float ZOverlap = (Dimensions.Z + Other.Dimensions.Z) * 0.5f + MinDistance;
+
+		return XOverlap && YOverlap && ZDist < ZOverlap;
 	}
     
 	bool IsWithinGrid(const FVector2D& GridSize, float TileSize) const
@@ -84,7 +91,14 @@ struct FProceduralGenerationParams
 	UPROPERTY(EditAnywhere, meta=(ClampMin=0,ClampMax=50, UIMin=0,UIMax=50), Category = "Level Generator") FVector2D MaxBounds = FVector2D(5,5);;
 
 	// Minimum and Maximum Spawn Height
-	UPROPERTY(EditAnywhere, Category = "Level Generator") FVector2f baseHeight = FVector2f(-500.f,500.f);  
+	UPROPERTY(EditAnywhere, Category = "Level Generator") FVector2f baseHeight = FVector2f(-500.f,500.f);
+
+	// --------------------------------------------------------------- Spawn Parameters For Objects --------------------------------------------------------------------------------------
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"), Category = "Spawn Parameters") float WallRunMinHeight = 200.0f;
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"), Category = "Spawn Parameters") float WallRunMaxHeight = 450.0f;
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"), Category = "Spawn Parameters") float MantleMinHeight = 400.0f;
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"), Category = "Spawn Parameters") float MantleMaxHeight = 800.0f;
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"), Category = "Spawn Parameters") float MantleMaxDistance = 300.0f;
 };
 
 USTRUCT(BlueprintType)
@@ -98,6 +112,38 @@ struct FProceduralGenerationMeshes
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Roof Mesh")
 	UStaticMesh* ClimbMesh = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Roof Mesh")
+	UStaticMesh* WallRunMesh = nullptr;
+};
+
+UENUM(BlueprintType)
+enum class EParkourType : uint8
+{
+	None            UMETA(DisplayName = "None"),
+	Mantle          UMETA(DisplayName = "Mantle"),
+	WallRun        UMETA(DisplayName = "Wall Run"),
+	LedgeGrab      UMETA(DisplayName = "Ledge Grab"),
+	WallJump       UMETA(DisplayName = "Wall Jump")
+};
+
+USTRUCT(BlueprintType)
+struct FPlatformEdge
+{
+GENERATED_BODY()
+	
+	FVector Start;
+	FVector End;
+	FVector Normal;
+	
+	FPlatformEdge()
+		: Start(FVector::ZeroVector)
+		, End(FVector::ZeroVector)
+		, Normal(FVector::ZeroVector)
+	{}
+	
+	FPlatformEdge(const FVector& InStart, const FVector& InEnd, const FVector& InNormal)
+		: Start(InStart), End(InEnd), Normal(InNormal) {}
 };
 
 UCLASS()
@@ -133,8 +179,36 @@ public:
 
 	FVector CalculatePlatformPosition(const FCornerCoordinates& Coords, float Height, int32 PlatformWidth, int32 PlatformLength) const;
 
-	void PlaceMantleObjects();
+	void AnalyseAndSpawnParkourConnections();
+	EParkourType DetermineParkourType(float Distance, float HeightDiff);
+	void SpawnParkourConnection(const FPlatformData& Start, const FPlatformData& End, EParkourType Type);
 
+	// Mantle
+	void SpawnMantleIndicator(const FVector& Start, const FVector& End);
+	
+	void SpawnMantlePointsAlongPath(const TArray<FVector>& PathPoints);
+	void GenerateEdgeFollowingPath(const FPlatformEdge& StartEdge, const FPlatformEdge& EndEdge, TArray<FVector>& OutPoints);
+	TArray<FPlatformEdge> GetPlatformEdges(const FPlatformData& Platform);
+
+	// Wallrun
+	void SpawnWallRunSurface(const FPlatformData& Start, const FPlatformData& End);
+
+	/*
+	 *
+	 *		Helper Functions
+	 *
+	 */
+
+	// Check if a path between platforms is clear
+	bool IsPathClear(const FPlatformData& Start, const FPlatformData& End) const;
+
+	// Get the closest points between two platforms
+	void GetClosestPlatformPoints(const FPlatformData& Start, const FPlatformData& End, 
+								FVector& OutStartPoint, FVector& OutEndPoint) const;
+
+	// Calculate edge-to-edge distance between platforms
+	float GetPlatformEdgeDistance(const FPlatformData& Start, const FPlatformData& End) const;
+	
 private:
 
 	TSharedPtr<Floor> Level;
