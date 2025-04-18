@@ -6,13 +6,10 @@
 #include "ProceduralGeneration/AnimationInstance/PAnimInstance.h"
 #include <GameFramework/CharacterMovementComponent.h>
 
-#include "InputActionValue.h"
-#include "VectorTypes.h"
 #include "Camera/CameraComponent.h"
 #include "ProceduralGeneration/PGameTags.h"
 
 #include "Components/CapsuleComponent.h"
-#include "EntitySystem/MovieSceneEntitySystemRunner.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
 #include "ProceduralGeneration/MechanicComponents/MechanicsComponent.h"

@@ -140,6 +140,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	// Check for fall animations
 	void CheckForFall();
@@ -162,7 +163,7 @@ protected:
 	void StopCrouch();
 
 	// VAULTING
-	void Interact();
+	UFUNCTION(BlueprintCallable) void Interact();
 	void VaultTrace();
 	void ApplyMotionWarping(FName WarpName, FVector WarpLocation);
 
@@ -178,6 +179,9 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	FTimerHandle TimerHandle_Parkour;
+	FTimerDelegate Delegate; // Delegate to bind function with parameters
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;

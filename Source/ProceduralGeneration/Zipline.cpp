@@ -4,9 +4,6 @@
 #include "Zipline.h"
 #include "Components/SplineComponent.h"
 
-#include "NavigationSystemTypes.h"
-#include "Components/SplineMeshComponent.h"
-
 void AZipline::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);

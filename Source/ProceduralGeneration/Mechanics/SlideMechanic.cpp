@@ -2,7 +2,6 @@
 
 #include "SlideMechanic.h"
 
-#include "Chaos/Utilities.h"
 #include "Components/CapsuleComponent.h"
 #include "ProceduralGeneration/ParkourCharacter.h"
 #include "ProceduralGeneration/AnimationInstance/PAnimInstance.h"

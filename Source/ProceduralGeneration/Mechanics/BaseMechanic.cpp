@@ -3,7 +3,6 @@
 
 #include "BaseMechanic.h"
 #include "ProceduralGeneration/MechanicComponents/MechanicsComponent.h"
-#include "ProceduralGeneration/PGameTags.h"
 
 void UBaseMechanic::Initialize(UMechanicsComponent* NewMechanic)
 {

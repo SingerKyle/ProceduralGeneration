@@ -3,9 +3,7 @@
 
 #include "VaultMechanic.h"
 #include "ProceduralGeneration/ParkourCharacter.h"
-#include "ProceduralGeneration/AnimationInstance/PAnimInstance.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "ProceduralGeneration/MechanicComponents/MechanicsComponent.h"
 
 void UVaultMechanic::OnMechanicAdded_Implementation(AActor* Actor)
 {

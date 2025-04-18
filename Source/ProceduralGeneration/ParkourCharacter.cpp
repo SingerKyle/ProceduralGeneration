@@ -8,7 +8,6 @@
 #include <GameFramework/Controller.h>
 #include "GameplayTagContainer.h"
 
-#include "ProceduralGeneration/PGameTags.h"
 #include "ProceduralGeneration/MechanicComponents/MechanicsComponent.h"
 
 #include "EnhancedInputComponent.h"
@@ -19,9 +18,7 @@
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
 #include "MotionWarpingComponent.h"
-#include "EntitySystem/MovieSceneEntitySystemRunner.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "PhysicsEngine/PhysicsSpringComponent.h"
 
 // Sets default values
 AParkourCharacter::AParkourCharacter()
@@ -100,7 +97,20 @@ void AParkourCharacter::BeginPlay()
 		//timelineProgress.BindUFunction(this, FName("CrouchTimer"));
 		CrouchTimeline.AddInterpFloat(CrouchCurveFloat, timelineProgress);
 	}
-	
+
+	Delegate.BindUFunction(this, "Interact"); 
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle_Parkour, Delegate, 0.2f, true);
+}
+
+void AParkourCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	// Ensure the fuze timer is cleared by using the timer handle
+	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_Parkour);
+
+	// Alternatively you can clear ALL timers that belong to this (Actor) instance.
+	GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
 }
 
 void AParkourCharacter::CheckForFall()
@@ -137,7 +147,7 @@ void AParkourCharacter::CheckForFall()
 		{
 			bIsPerformingAction = true;
 			TFPSCamera->bUsePawnControlRotation = false;
-			AnimInstance->Montage_Play(FallMontages[1]);
+			AnimInstance->Montage_Play(FallMontages[1], 1.25);
 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Play 1"));
 			if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
 			{
@@ -147,7 +157,7 @@ void AParkourCharacter::CheckForFall()
 	}
 
 	// stop sprinting if we are sprinting
-	IsSprinting = false;
+	//IsSprinting = false;
 }
 
 void AParkourCharacter::Landed(const FHitResult& Hit)
@@ -318,7 +328,7 @@ void AParkourCharacter::Interact()
 	}
 	
 	// Check if player is moving fast enough to vault AND not falling.
-	if (GetCharacterMovement()->Velocity.Length() > WalkSpeed - 150.f && !GetCharacterMovement()->IsFalling())
+	if (GetCharacterMovement()->Velocity.Length() > WalkSpeed && !GetCharacterMovement()->IsFalling())
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Interacting"));
 		VaultTrace();
@@ -347,6 +357,9 @@ void AParkourCharacter::Interact()
 				AnimInstance->OnMontageEnded.AddDynamic(this, &AParkourCharacter::OnVaultMontageEnded);
 				
 				AnimInstance->Montage_Play(VaultMontages[FMath::RandRange(0, VaultMontages.Num() - 1)]); // Play the montage
+			
+				
+				
 				//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Sliding!"));
 				}
 		}
@@ -503,6 +516,7 @@ void AParkourCharacter::MantleTrace()
 	FHitResult OutHit;
 
 	FVector Start = GetActorLocation();
+	Start += FVector(0,0,50.f);
 	FVector End = Start + (GetActorForwardVector() * MantleInitialTraceLength);
 
 	DrawDebugLine(GetWorld(), Start, End, FColor::Blue, false, 5.0f, 0, 2.0f);
@@ -708,6 +722,9 @@ void AParkourCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	// Check if AnimInstance is crouching
+
+	// Check for Parkour
+	
 }
 
 // Called to bind functionality to input
