@@ -519,7 +519,7 @@ void AParkourCharacter::MantleTrace()
 	Start += FVector(0,0,50.f);
 	FVector End = Start + (GetActorForwardVector() * MantleInitialTraceLength);
 
-	DrawDebugLine(GetWorld(), Start, End, FColor::Blue, false, 5.0f, 0, 2.0f);
+	//DrawDebugLine(GetWorld(), Start, End, FColor::Blue, false, 5.0f, 0, 2.0f);
 
 	// Trace to check for a mantle-able object
 	if (GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_Visibility))
@@ -618,7 +618,7 @@ void AParkourCharacter::VaultTrace()
 	FVector Start = GetActorLocation() + FVector(0,0,-15);
 	FVector End = (Start + GetActorForwardVector() * InitialTraceLength) + FVector(0,0,-15);
 
-	DrawDebugLine(GetWorld(), Start, End, FColor::Blue, false, 5.0f, 0, 2.0f);
+	//DrawDebugLine(GetWorld(), Start, End, FColor::Blue, false, 5.0f, 0, 2.0f);
 	
 	// Line trace for an object to vault over, if object is found it will find vault target locations
 	if (GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_Visibility))
