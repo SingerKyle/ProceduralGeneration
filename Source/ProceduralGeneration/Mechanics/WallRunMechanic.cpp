@@ -97,7 +97,7 @@ void UWallRunMechanic::OnCapsuleComponentHit(UPrimitiveComponent* HitComponent, 
 		float DotResult = FVector::DotProduct(Player->GetActorForwardVector(), WallRunNormal);
 		//PlayerDirection.Vector()
 		
-		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, FString::Printf(TEXT("DotResult = %f"), DotResult));
+		//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, FString::Printf(TEXT("DotResult = %f"), DotResult));
 		
 		if (ContinueWallRun() && DotResult > 0.4) // make variable
 		{
@@ -119,7 +119,7 @@ void UWallRunMechanic::StartMechanic_Implementation(AActor* Actor)
 	
 	if (bIsWallRunning)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("LAUNCH CHARACTER"));
+		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("LAUNCH CHARACTER"));
 		// Stop wallrun and launch in camera forward direction
 		const FVector JumpOffDirection = Player->GetTrueFirstPersonCamera()->GetForwardVector();
 		const FVector JumpOffVector = Player->GetCharacterMovement()->GetCurrentAcceleration().GetSafeNormal() + FVector::UpVector + JumpOffDirection;
@@ -130,7 +130,7 @@ void UWallRunMechanic::StartMechanic_Implementation(AActor* Actor)
 	}
 	else
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Jumping!"));
+		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Jumping!"));
 		Player->Jump();
 	}
 }
@@ -254,7 +254,6 @@ void UWallRunMechanic::TickMechanic_Implementation(float DeltaTime)
 			else
 			{
 				DrawDebugSphere(GetWorld(), Start, 5.0f, 12, FColor::Red, false, 5.0f);
-				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Fuck you!"));
 				EndWallrun();
 			}
 		}

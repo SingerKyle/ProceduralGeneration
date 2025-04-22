@@ -80,7 +80,7 @@ void USlideMechanic::StartSlide()
 	if (AnimInstance && MechanicMontage) // Ensure the anim instance and montage are valid
 	{
 		AnimInstance->Montage_Play(MechanicMontage); // Play the montage
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Sliding!"));
+		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Sliding!"));
 	}
 
 	// Scale capsule component - timeline
@@ -103,7 +103,7 @@ void USlideMechanic::StopSlide()
 		{
 			AnimInstance->Montage_Play(EndSlideMontage);
 		}
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("NOT Sliding!"));
+			//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("NOT Sliding!"));
 		}
 	
 	SlideCapsuleScaleTimeline.Reverse();
@@ -119,7 +119,7 @@ void USlideMechanic::UpdateCapsule(float Value) const
 	{
 		CapsuleComponent->SetCapsuleHalfHeight(FMath::Lerp(Player->GetCapsuleFull().Y, Player->GetCapsuleHalf().Y, Value));
 
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Changing Capsule Height?!"));
+		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Changing Capsule Height?!"));
 	}
 }
 
@@ -127,7 +127,7 @@ void USlideMechanic::UpdateMesh(float Value) const
 {
 	if (USkeletalMeshComponent* Mesh = Player->GetMesh())
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("Timeline Value: %f"), Value));
+		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("Timeline Value: %f"), Value));
 		
 		// Get the current relative location of the mesh
 		FVector CurrentLocation = Mesh->GetRelativeLocation();
@@ -138,7 +138,7 @@ void USlideMechanic::UpdateMesh(float Value) const
 	}
 	else
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Can't Get Mesh"));
+		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Can't Get Mesh"));
 	}
 }
 
@@ -169,7 +169,7 @@ void USlideMechanic::CheckShouldContinueSlide()
 			StopSlide();
 		}
 
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Speed - %f"), Player->GetCharacterMovement()->Velocity.Length()));
+		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Speed - %f"), Player->GetCharacterMovement()->Velocity.Length()));
 	}
 }
 
@@ -189,7 +189,7 @@ void USlideMechanic::StopMechanic_Implementation(AActor* Actor)
 	
 	Super::StopMechanic_Implementation(Actor);
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("STOP!"));
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("STOP!"));
 	AnimInstance->SetCrouching(false);
 	AnimInstance->SetSliding(false);
 
@@ -232,7 +232,7 @@ void USlideMechanic::TickMechanic_Implementation(float DeltaTime) // Replace wit
 		{
 			// set sliding to false
 			StopMechanic_Implementation(Player);
-			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, TEXT("Stop slide!"));
+			//GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, TEXT("Stop slide!"));
 		}
 
 		CheckShouldContinueSlide();
@@ -263,7 +263,7 @@ void USlideMechanic::TickMechanic_Implementation(float DeltaTime) // Replace wit
 
 				// Apply smooth rotation
 				Player->GetMesh()->SetRelativeRotation(FMath::RInterpTo(Player->GetMesh()->GetRelativeRotation(), FinalTargetRotation, DeltaTime, 3.f));
-				GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, TEXT("Set Rotation!"));
+				//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, TEXT("Set Rotation!"));
 				
 				//GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Yellow, FString::Printf(TEXT("ActorRotation - Pitch: %f  Roll: %f  Yaw: %f"), Player->GetActorRotation().Pitch, Player->GetActorRotation().Roll, Player->GetActorRotation().Yaw));
 				//GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Yellow, FString::Printf(TEXT("TargetRotation - Pitch: %f  Roll: %f  Yaw: %f"), TargetRotation.Pitch, TargetRotation.Roll, TargetRotation.Yaw));

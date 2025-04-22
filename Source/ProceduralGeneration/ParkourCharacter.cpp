@@ -117,7 +117,7 @@ void AParkourCharacter::CheckForFall()
 {
 	// get velocity at landing
 	float PlayerVelocity = GetVelocity().Z;
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("PlayerVelocity: %f"), PlayerVelocity));
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("PlayerVelocity: %f"), PlayerVelocity));
 	//PlayerVelocity *= 1;
 
 	// Ensure the delegate is only added once
@@ -126,15 +126,15 @@ void AParkourCharacter::CheckForFall()
 		AnimInstance->OnMontageEnded.AddDynamic(this, &AParkourCharacter::OnFallMontageEnded);
 	}
 	
-	// if fallheight larger than 750 then roll
-	if (PlayerVelocity < -850 && PlayerVelocity > -1250) // make variable
+	// if fallheight larger than 950 then roll
+	if (PlayerVelocity < -950 && PlayerVelocity > -1250) // make variable
 	{
 		if(AnimInstance)
 		{
 			bIsPerformingAction = true;
 			TFPSCamera->bUsePawnControlRotation = false;
 			AnimInstance->Montage_Play(FallMontages[0]);
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Play 0"));
+			//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Play 0"));
 			if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
 			{
 				DisableInput(PlayerController); // find better way
@@ -148,7 +148,7 @@ void AParkourCharacter::CheckForFall()
 			bIsPerformingAction = true;
 			TFPSCamera->bUsePawnControlRotation = false;
 			AnimInstance->Montage_Play(FallMontages[1], 1.25);
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Play 1"));
+			//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Play 1"));
 			if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
 			{
 				DisableInput(PlayerController);
@@ -169,7 +169,7 @@ void AParkourCharacter::Landed(const FHitResult& Hit)
 
 void AParkourCharacter::OnFallMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("End Fall Montage"));
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("End Fall Montage"));
 	
 	if (AnimInstance)
 	{
@@ -292,7 +292,7 @@ void AParkourCharacter::StopJumpCheck()
 
 void AParkourCharacter::StartCrouch()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("StartCrouch called"));
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("StartCrouch called"));
 
 	if (MechanicComponent)
 	{
@@ -330,7 +330,7 @@ void AParkourCharacter::Interact()
 	// Check if player is moving fast enough to vault AND not falling.
 	if (GetCharacterMovement()->Velocity.Length() > WalkSpeed && !GetCharacterMovement()->IsFalling())
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Interacting"));
+		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Interacting"));
 		VaultTrace();
 
 		if (bCanVault)
@@ -346,9 +346,9 @@ void AParkourCharacter::Interact()
 			ApplyMotionWarping(FName("VaultLand"), VaultLand);
 
 			// Log the warping locations
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("VaultStart: %s"), *VaultStart.ToString()));
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("VaultMiddle: %s"), *VaultMiddle.ToString()));
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("VaultLand: %s"), *VaultLand.ToString()));
+			//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("VaultStart: %s"), *VaultStart.ToString()));
+			//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("VaultMiddle: %s"), *VaultMiddle.ToString()));
+			//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("VaultLand: %s"), *VaultLand.ToString()));
 			
 			if (AnimInstance && VaultMontages.Num() > 0) // Ensure the anim instance and montage are valid
 				{
@@ -439,7 +439,7 @@ void AParkourCharacter::ApplyMotionWarping(FName WarpName, FVector WarpLocation)
 		//WarpTarget.GetTargetTrasform().SetRotation(GetActorRotation().Quaternion());
 
 		// Log the warping locations
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("VaultStart: %s"), *WarpLocation.ToString()));
+		//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("VaultStart: %s"), *WarpLocation.ToString()));
 				
 		WarpComponent->AddOrUpdateWarpTarget(WarpTarget);
 	}
@@ -459,7 +459,7 @@ void AParkourCharacter::ApplyMantleMotionWarping(FName WarpName, FVector WarpLoc
 		//WarpTarget.GetTargetTrasform().SetRotation(GetActorRotation().Quaternion());
 
 		// Log the warping locations
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("MantleStart: %s"), *WarpLocation.ToString()));
+		//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("MantleStart: %s"), *WarpLocation.ToString()));
 				
 		WarpComponent->AddOrUpdateWarpTarget(WarpTarget);
 	}
@@ -479,7 +479,7 @@ void AParkourCharacter::OnMantleMontageEnded(UAnimMontage* Montage, bool bInterr
 
 	TFPSCamera->bUsePawnControlRotation = true;
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Mantle Montage Ended, Movement Mode Set to Walking"));
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Mantle Montage Ended, Movement Mode Set to Walking"));
 
 	GetCharacterMovement()->SetMovementMode(MOVE_Falling);
 }
@@ -497,7 +497,7 @@ void AParkourCharacter::OnVaultMontageEnded(UAnimMontage* Montage, bool bInterru
 	bIsPerformingAction = false;
 
 	//TFPSCamera->bUsePawnControlRotation = true;
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Vault Montage Ended, Movement Mode Set to Walking"));
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Vault Montage Ended, Movement Mode Set to Walking"));
 	
 	// Reset movement mode back to walking
 	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
@@ -524,7 +524,7 @@ void AParkourCharacter::MantleTrace()
 	// Trace to check for a mantle-able object
 	if (GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_Visibility))
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Found Mantle Object"));
+		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Found Mantle Object"));
 		
 		float SphereRadius = 10.f;
 
@@ -547,8 +547,8 @@ void AParkourCharacter::MantleTrace()
 			MantlePosition1 = SphereHitResult.ImpactPoint + (GetActorForwardVector() * -50.f);
 			MantlePosition2 = SphereHitResult.ImpactPoint + (GetActorForwardVector() * 120.f);
 
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("MantlePosition1: %s"), *MantlePosition1.ToString()));
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("MantlePosition2: %s"), *MantlePosition2.ToString()));
+			//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("MantlePosition1: %s"), *MantlePosition1.ToString()));
+			//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("MantlePosition2: %s"), *MantlePosition2.ToString()));
 			
 			DrawDebugSphere(GetWorld(), MantlePosition1, SphereRadius, 12, FColor::Orange, false, 5.0f);
 			DrawDebugSphere(GetWorld(), MantlePosition2, SphereRadius, 12, FColor::Red, false, 5.0f);
@@ -562,7 +562,7 @@ void AParkourCharacter::MantleTrace()
 			if (GetWorld()->SweepSingleByChannel(InnerSphereHitResult, Start, Start, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(SphereRadius), CollisionParams))
 			{
 				bCanMantle = false;
-				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Not enough space for player"));
+				//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Not enough space for player"));
 			}
 			else
 			{
@@ -570,7 +570,7 @@ void AParkourCharacter::MantleTrace()
 				if(MantlePosition1.IsZero() || MantlePosition2.IsZero())
 				{
 					bCanMantle = false;
-					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Position 1 and 2 are 0,0,0"));
+					//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Position 1 and 2 are 0,0,0"));
 				}
 				else
 				{
@@ -586,11 +586,11 @@ void AParkourCharacter::MantleTrace()
 					if (GetWorld()->SweepSingleByChannel(SphereHitResult, Start, End, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(SphereRadius), CollisionParams))
 					{
 						bCanMantle = false;
-						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Can't Mantle at End"));
+						//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Can't Mantle at End"));
 					}
 					else
 					{
-						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Can Mantle"));
+						//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Can Mantle"));
 					}
 				}
 			}
@@ -623,7 +623,7 @@ void AParkourCharacter::VaultTrace()
 	// Line trace for an object to vault over, if object is found it will find vault target locations
 	if (GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_Visibility))
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("HIT LINE TRACE"));
+		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("HIT LINE TRACE"));
 		
 		VaultDistance = 0;
 
@@ -652,7 +652,7 @@ void AParkourCharacter::VaultTrace()
 			{
 				if (i == 0) // set start location of vault if it is the first trace. Sphere trace checks for any blocking that prevents vaulting
 				{
-					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("VAULT START LOCATION"));
+					//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("VAULT START LOCATION"));
 					VaultStart = SphereHitResult.ImpactPoint;
 
 					DrawDebugLine(GetWorld(), Start, VaultStart, FColor::Green, false, 5.0f, 0, 2.0f);
@@ -660,7 +660,7 @@ void AParkourCharacter::VaultTrace()
 					// another sphere trace for end
 					if (GetWorld()->SweepSingleByChannel(SphereHitResult, FVector(VaultStart.X, VaultStart.Y, VaultStart.Z + 50), FVector(VaultStart.X, VaultStart.Y, VaultStart.Z + 20), FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(SphereRadius), CollisionParams))
 					{
-						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("VAULT START SPHERE TRIGGER"));
+						//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("VAULT START SPHERE TRIGGER"));
 						bCanVault = false;
 						DrawDebugLine(GetWorld(), VaultStart, FVector(VaultStart.X, VaultStart.Y, VaultStart.Z + 20), FColor::Red, false, 5.0f, 0, 2.0f);
 						break;
@@ -668,7 +668,7 @@ void AParkourCharacter::VaultTrace()
 				}
 				else // if the trace is not the first then this will determine the middle / height location
 				{
-					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("VAULT MIDDLE LOCATION"));
+					//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("VAULT MIDDLE LOCATION"));
 					VaultMiddle = SphereHitResult.ImpactPoint;
 
 					DrawDebugLine(GetWorld(), Start, VaultMiddle, FColor::Green, false, 5.0f, 0, 2.0f);
@@ -705,7 +705,7 @@ void AParkourCharacter::VaultTrace()
 					else
 					{
 						VaultLand = OutHit.Location +FVector(0,0,-20.f);
-						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("VAULT LAND LOCATION"));
+						//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("VAULT LAND LOCATION"));
 						DrawDebugSphere(GetWorld(), VaultLand, SphereRadius, 12, FColor::Red, false, 5.0f);
 					}
 				}

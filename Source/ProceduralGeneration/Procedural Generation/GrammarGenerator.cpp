@@ -89,13 +89,13 @@ void AGrammarGenerator::GeneratePlatformChain()
     FPlatformEdges LastPlatformEdges = CalculatePlatformEdges(LastPlatformLocation, LastPlatformScale, InitialRotation);
     
     SpawnPlatform(LastPlatformLocation, LastPlatformScale, InitialRotation, TEXT("Platform: 1 : Start"));
-    DrawDebugLabel(TEXT("Platform: 1 : Start"), LastPlatformLocation);
+    //DrawDebugLabel(TEXT("Platform: 1 : Start"), LastPlatformLocation);
 
     // Debug spheres for corners
-    DrawDebugSphere(GetWorld(), LastPlatformEdges.TopLeftCoord, 50.f, 12, FColor::Red, true, 30.f);
-    DrawDebugSphere(GetWorld(), LastPlatformEdges.BottomLeftCoord, 50.f, 12, FColor::Orange, true, 30.f);
-    DrawDebugSphere(GetWorld(), LastPlatformEdges.TopRightCoord, 50.f, 12, FColor::Yellow, true, 30.f);
-    DrawDebugSphere(GetWorld(), LastPlatformEdges.BottomRightCoord, 50.f, 12, FColor::Blue, true, 30.f);
+    //DrawDebugSphere(GetWorld(), LastPlatformEdges.TopLeftCoord, 50.f, 12, FColor::Red, true, 30.f);
+    //DrawDebugSphere(GetWorld(), LastPlatformEdges.BottomLeftCoord, 50.f, 12, FColor::Orange, true, 30.f);
+    //DrawDebugSphere(GetWorld(), LastPlatformEdges.TopRightCoord, 50.f, 12, FColor::Yellow, true, 30.f);
+    //DrawDebugSphere(GetWorld(), LastPlatformEdges.BottomRightCoord, 50.f, 12, FColor::Blue, true, 30.f);
 
     ExpandRule("StartRule", FSpawnParams.NumPlatforms - 1);
 }
@@ -281,7 +281,7 @@ void AGrammarGenerator::ExpandRule(const FString& Rule, int32 RemainingPlatforms
         FText EnumDisplayName = StaticEnum<EPlatformPlacementCategory>()->GetDisplayNameTextByValue((int64)NextCategory);
         SpawnPlatform(NewLocation, NewScale, NewRotation,FString::Printf(TEXT("Platform: %d : %s"), (FSpawnParams.NumPlatforms - RemainingPlatforms + 1), *EnumDisplayName.ToString()));
         
-        DrawDebugLabel(FString::Printf(TEXT("Platform %d (%s)"), FSpawnParams.NumPlatforms - RemainingPlatforms + 1, *UEnum::GetValueAsString(NextCategory)), NewLocation);
+        //DrawDebugLabel(FString::Printf(TEXT("Platform %d (%s)"), FSpawnParams.NumPlatforms - RemainingPlatforms + 1, *UEnum::GetValueAsString(NextCategory)), NewLocation);
 
         // Get edges of previous and current platform.
         FPlatformEdges OldEdges = CalculatePlatformEdges(LastPlatformLocation, LastPlatformScale, LastPlatformRotation);
@@ -290,10 +290,10 @@ void AGrammarGenerator::ExpandRule(const FString& Rule, int32 RemainingPlatforms
         SpawnObstaclesForCategory(NextCategory, OldEdges, NewEdges);
         
         FPlatformEdges NewPlatformEdges = CalculatePlatformEdges(NewLocation, NewScale, NewRotation);
-        DrawDebugSphere(GetWorld(), NewPlatformEdges.TopLeftCoord, 50.f, 12, FColor::Red, true, 30.f);
-        DrawDebugSphere(GetWorld(), NewPlatformEdges.BottomLeftCoord, 50.f, 12, FColor::Orange, true, 30.f);
-        DrawDebugSphere(GetWorld(), NewPlatformEdges.TopRightCoord, 50.f, 12, FColor::Yellow, true, 30.f);
-        DrawDebugSphere(GetWorld(), NewPlatformEdges.BottomRightCoord, 50.f, 12, FColor::Blue, true, 30.f);
+        //DrawDebugSphere(GetWorld(), NewPlatformEdges.TopLeftCoord, 50.f, 12, FColor::Red, true, 30.f);
+        //DrawDebugSphere(GetWorld(), NewPlatformEdges.BottomLeftCoord, 50.f, 12, FColor::Orange, true, 30.f);
+        //DrawDebugSphere(GetWorld(), NewPlatformEdges.TopRightCoord, 50.f, 12, FColor::Yellow, true, 30.f);
+        //DrawDebugSphere(GetWorld(), NewPlatformEdges.BottomRightCoord, 50.f, 12, FColor::Blue, true, 30.f);
 
         // Update state.
         LastPlatformLocation = NewLocation;
@@ -428,7 +428,7 @@ FRotator AGrammarGenerator::CalculateWallRunRotation(const FPlatformEdges& OldEd
     // calculate direction vector between platforms
     FVector Direction = (((NewStart + NewEnd) / 2) - ((OldStart + OldEnd) / 2)).GetSafeNormal();
 
-    DrawDebugSphere(GetWorld(), Direction, 100.f, 12, FColor::Purple, true, 30.f);
+    //DrawDebugSphere(GetWorld(), Direction, 100.f, 12, FColor::Purple, true, 30.f);
     
     return Direction.Rotation();
     
@@ -566,7 +566,7 @@ void AGrammarGenerator::SpawnVaultObstacle(const FVector& Vector, const FRotator
         MeshComp->SetStaticMesh(FSpawnParams.MantleMesh);
 
         float Length = Distance * 0.9f;
-        MeshComp->SetWorldScale3D(FVector(FMath::RandRange(0.15, 1.2), Length / 100, 1));
+        MeshComp->SetWorldScale3D(FVector(FMath::RandRange(0.15, 1.0), Length / 100, 1));
 
         MeshComp->SetMaterial(0, FSpawnParams.ObstacleMaterial);
 
@@ -597,11 +597,11 @@ void AGrammarGenerator::SpawnVaultObstacles(const FPlatformEdges& PlatformEdges)
     VaultStart += Properties.bSpawnAlongX ? FVector(FMath::RandRange(100.f, (Properties.PlatformWidth / 3)), 0, 0)
         : FVector(0, FMath::RandRange(100.f, Properties.PlatformDepth / 3), 0);
 
-    float Spacing = FMath::RandRange(550.f, 1050.f);
+    float Spacing = FMath::RandRange(550.f, 700.f);
     
     float Distance = Properties.bSpawnAlongX ? Properties.PlatformWidth : Properties.PlatformDepth;
     
-    int NumVaults = std::min(static_cast<int>(Distance / Spacing), 6);
+    int NumVaults = std::min(static_cast<int>(Distance / Spacing), 7);
     
     UE_LOG(LogTemp, Warning, TEXT("HELP: %i"), NumVaults);
 
@@ -623,7 +623,7 @@ void AGrammarGenerator::SpawnMantleStaircase(const FPlatformEdges& OldEdges, con
 {
     if (StepCount <= 1)
     {
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("1 Mantle or less: %d"), StepCount));
+        //GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("1 Mantle or less: %d"), StepCount));
         return;
     }
     
@@ -633,7 +633,7 @@ void AGrammarGenerator::SpawnMantleStaircase(const FPlatformEdges& OldEdges, con
 
     if (OldStart.IsZero() || NewStart.IsZero())
     {
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("IsZero")));
+        //GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("IsZero")));
         return;
     }
 
@@ -914,7 +914,7 @@ void AGrammarGenerator::SpawnPlatform(const FVector& Location, const FVector& Sc
     }
     
     // Optionally draw a debug sphere at the platform location.
-    DrawDebugSphere(GetWorld(), Location, 100.f, 12, FColor::Cyan, true, 30.f);
+    //DrawDebugSphere(GetWorld(), Location, 100.f, 12, FColor::Cyan, true, 30.f);
 
     // add to array
     PlacedPlatforms.Add(PlatformActor);
@@ -933,7 +933,7 @@ void AGrammarGenerator::DrawDebugLabel(const FString& Text, const FVector& Locat
 {
     if (GetWorld())
     {
-        DrawDebugString(GetWorld(), Location + FVector(0, 0, 150.f), Text, nullptr, FColor::White, 30.f);
+        //DrawDebugString(GetWorld(), Location + FVector(0, 0, 150.f), Text, nullptr, FColor::White, 30.f);
     }
 }
 
