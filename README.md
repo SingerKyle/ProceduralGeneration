@@ -3,8 +3,9 @@
 
 ![Unreal Engine 5.4.4](https://img.shields.io/badge/Engine-Unreal%205.4.4-5c7ec2?logo=unrealengine&logoColor=white)
 ![Language: C++](https://img.shields.io/badge/Language-C%2B%2B-00599C?logo=c%2B%2B&logoColor=white)
-![Project Stage: Honours](https://img.shields.io/badge/Stage-Honours%20Project-orange)
+![Project Type: Procedural Generation](https://img.shields.io/badge/Project%20Type-Procedural%20Generation-blueviolet)
 ![Status: WIP](https://img.shields.io/badge/Status-Work%20in%20Progress-yellow)
+
 
 ---
 
