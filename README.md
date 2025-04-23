@@ -37,7 +37,7 @@ Each level should feel *handcrafted* but is generated **entirely procedurally**,
 | Action  | Input |
 |:-------:|:-----:|
 | Jump | Spacebar |
-| Vault / Mantle | Automatic when close to an obstacle |
+| Vault / Mantle | Spacebar when close to an obstacle |
 | Wallrun | Automatic on approach to a wallrun wall |
 | Move | WASD |
 | Sprint | Shift |
