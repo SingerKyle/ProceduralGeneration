@@ -611,6 +611,7 @@ void AGrammarGenerator::SpawnVaultObstacles(const FPlatformEdges& PlatformEdges)
         
         FVector Offset = VaultDirection * (i * Spacing);
         FVector VaultLocation = VaultStart + Offset;
+        VaultLocation.Z = Properties.MinBounds.Z;
 
         // Ensure correct obstacle rotation
         FRotator VaultRotation = FRotationMatrix::MakeFromXZ(VaultDirection, FVector::UpVector).Rotator();
@@ -738,6 +739,8 @@ void AGrammarGenerator::SpawnObstaclesForCategory(EPlatformPlacementCategory Cat
                 int32 StepCount = HandleMantleSpawns(OldEdges, NewEdges);
 
                 SpawnMantleStaircase(OldEdges, NewEdges,Category, StepCount);
+
+                SpawnVaultObstacles(NewEdges);
                 
                 break;
             }
