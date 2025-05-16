@@ -99,7 +99,7 @@ void AParkourCharacter::BeginPlay()
 	}
 
 	Delegate.BindUFunction(this, "Interact"); 
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_Parkour, Delegate, 0.2f, true);
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle_Parkour, Delegate, 0.1f, true);
 }
 
 void AParkourCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -116,7 +116,7 @@ void AParkourCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void AParkourCharacter::CheckForFall()
 {
 	// get velocity at landing
-	float PlayerVelocity = GetVelocity().Z;
+	FVector PlayerVelocity = GetVelocity();
 	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("PlayerVelocity: %f"), PlayerVelocity));
 	//PlayerVelocity *= 1;
 
@@ -126,14 +126,14 @@ void AParkourCharacter::CheckForFall()
 		AnimInstance->OnMontageEnded.AddDynamic(this, &AParkourCharacter::OnFallMontageEnded);
 	}
 	
-	// if fallheight larger than 950 then roll
-	if (PlayerVelocity < -950 && PlayerVelocity > -1250) // make variable
+	// if fallheight larger than 1050 then roll
+	if (PlayerVelocity.Z < -1050 && PlayerVelocity.Z > -1200) // make variable
 	{
 		if(AnimInstance)
 		{
 			bIsPerformingAction = true;
 			TFPSCamera->bUsePawnControlRotation = false;
-			AnimInstance->Montage_Play(FallMontages[0]);
+			AnimInstance->Montage_Play(FallMontages[0], 1.3);
 			//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Play 0"));
 			if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
 			{
@@ -141,7 +141,7 @@ void AParkourCharacter::CheckForFall()
 			}
 		}
 	}
-	else if (PlayerVelocity < -1251)
+	else if (PlayerVelocity.Z < -1201)
 	{
 		if(AnimInstance)
 		{
@@ -262,11 +262,10 @@ void AParkourCharacter::Jump()
 			LaunchCharacter(LaunchVelocity, false, false);
 			Super::Jump();
 		}
-		else
-		{
-			Super::Jump();
-		}
 	}
+
+	if(!bIsPerformingAction) Super::Jump();
+	
 }
 
 FRotator AParkourCharacter::GetInputDirection()
@@ -516,7 +515,7 @@ void AParkourCharacter::MantleTrace()
 	FHitResult OutHit;
 
 	FVector Start = GetActorLocation();
-	Start += FVector(0,0,50.f);
+	Start += FVector(0,0,25.f);
 	FVector End = Start + (GetActorForwardVector() * MantleInitialTraceLength);
 
 	//DrawDebugLine(GetWorld(), Start, End, FColor::Blue, false, 5.0f, 0, 2.0f);
@@ -629,7 +628,7 @@ void AParkourCharacter::VaultTrace()
 
 		float SphereRadius = 10.f;
 
-		for (int i = 0; i < 10; i++)
+		for (int i = 0; i < 14; i++)
 		{
 			VaultDistance++;
 
